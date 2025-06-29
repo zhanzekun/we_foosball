@@ -32,6 +32,7 @@ export default function WelcomePage() {
         .maybeSingle()
 
       if (error) {
+        alert(error.message || '检查用户状态失败')
         throw new Error(error.message || '检查用户状态失败')
       }
 
@@ -86,7 +87,8 @@ export default function WelcomePage() {
           <img src="/logo.svg" alt="logo" className="welcome-logo-icon" />
           <div className="welcome-title">WeFoosball</div>
         </div>
-        <div className="welcome-subtitle">Play Foosball. Anytime. Anywhere.</div>
+        <div className="welcome-subtitle">WXG 桌上足球协会</div>
+      <div className="welcome-version">构建号: {process.env.NEXT_PUBLIC_BUILD_ID}</div>
       </div>
       <div className="welcome-login-bottom">
         <div className="welcome-login-row">

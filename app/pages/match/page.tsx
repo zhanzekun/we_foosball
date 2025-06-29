@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Card, Button, Checkbox } from 'antd-mobile'
+import { Card, Button, Checkbox, Input } from 'antd-mobile'
 import supabase from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
 // 只用于类型提示
@@ -17,6 +17,10 @@ interface MatchResult {
   team2: Player[]
 }
 
+interface PlayerScore {
+  [playerId: string]: number
+}
+
 export default function Match() {
   const [players, setPlayers] = useState<Player[]>([])
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set())
@@ -26,6 +30,8 @@ export default function Match() {
   const [combo2v2, setCombo2v2] = useState<Player[] | null>(null)
   const [isBuffFlipped, setIsBuffFlipped] = useState(false)
   const [buff, setBuff] = useState<BuffCard | null>(null)
+  const [playerScores, setPlayerScores] = useState<PlayerScore>({})
+  const [isMatchStarted, setIsMatchStarted] = useState(false)
   const buffCardRef = useRef<HTMLDivElement>(null)
 
   // 获取玩家列表
@@ -59,14 +65,14 @@ export default function Match() {
   // 随机匹配逻辑
   const performMatch = (selectedPlayerIds: string[]): MatchResult => {
     const selectedPlayerList = players.filter(player => selectedPlayerIds.includes(player.user_custom_id))
-    
+
     // 随机打乱数组
     const shuffled = [...selectedPlayerList].sort(() => Math.random() - 0.5)
-    
+
     // 分成两队，每队4人
     const team1 = shuffled.slice(0, 4)
     const team2 = shuffled.slice(4, 8)
-    
+
     return { team1, team2 }
   }
 
@@ -89,6 +95,7 @@ export default function Match() {
         setCombo2v2(twoVtwoPlayers)
         setShow2v2(true)
         setMatchResult(null)
+        setIsMatchStarted(true)
         setIsLoading(false)
         // 已随机出2v2组合！
         return
@@ -99,6 +106,7 @@ export default function Match() {
         setCombo2v2(twoVtwoPlayers)
         setShow2v2(true)
         setMatchResult(null)
+        setIsMatchStarted(true)
         setIsLoading(false)
         // 已随机出2v2组合！
         return
@@ -108,9 +116,63 @@ export default function Match() {
       setMatchResult(result)
       setCombo2v2(null)
       setShow2v2(false)
+      setIsMatchStarted(true)
       setIsLoading(false)
       // 匹配完成！
     }, 1000)
+  }
+
+  // 处理玩家进球数输入
+  const handlePlayerScoreChange = (playerId: string, value: string) => {
+    const numValue = parseFloat(value) || 0
+    setPlayerScores(prev => ({
+      ...prev,
+      [playerId]: numValue
+    }))
+  }
+
+  // 获取玩家进球数显示值
+  const getPlayerScoreDisplayValue = (playerId: string) => {
+    const score = playerScores[playerId] || 0
+    return score === 0 ? '' : score.toString()
+  }
+
+  // 计算队伍总进球数
+  const getTeamTotalScore = (teamPlayers: Player[]) => {
+    return teamPlayers.reduce((total, player) => {
+      return total + (playerScores[player.user_custom_id] || 0)
+    }, 0)
+  }
+
+  // 结算比赛
+  const handleSettle = () => {
+    // 这里可以添加保存比赛结果的逻辑
+    const matchData = {
+      team1: combo2v2?.slice(0, 2) || matchResult?.team1,
+      team2: combo2v2?.slice(2, 4) || matchResult?.team2,
+      playerScores,
+      team1Total: getTeamTotalScore(combo2v2?.slice(0, 2) || matchResult?.team1 || []),
+      team2Total: getTeamTotalScore(combo2v2?.slice(2, 4) || matchResult?.team2 || [])
+    }
+
+    console.log('比赛结果:', matchData)
+
+    // 重置状态
+    setSelectedPlayers(new Set())
+    setMatchResult(null)
+    setCombo2v2(null)
+    setShow2v2(false)
+    setIsMatchStarted(false)
+    setPlayerScores({})
+  }
+
+  // 取消比赛
+  const handleCancel = () => {
+    setMatchResult(null)
+    setCombo2v2(null)
+    setShow2v2(false)
+    setIsMatchStarted(false)
+    setPlayerScores({})
   }
 
   const selectedCount = selectedPlayers.size
@@ -171,21 +233,10 @@ export default function Match() {
             )
           })}
         </div>
-        
+
         <div className="match-info">
           <p>已选择: {selectedCount} 人</p>
         </div>
-        
-        <Button
-          block
-          color="primary"
-          size="large"
-          loading={isLoading}
-          disabled={!canStartMatch}
-          onClick={handleStartMatch}
-        >
-          {isLoading ? '匹配中...' : '开始匹配'}
-        </Button>
       </Card>
 
       {/* 2v2 组合展示 */}
@@ -201,19 +252,45 @@ export default function Match() {
             <Card title="2v2 随机组合" style={{ marginTop: 16 }}>
               <div className="match-result">
                 <div className="team vertical-team">
-                  <h4>红队</h4>
+                  <h4>红队 ({getTeamTotalScore(combo2v2.slice(0, 2))})</h4>
                   <div className="team-list">
                     {combo2v2.slice(0, 2).map(player => (
-                      <div key={player.user_custom_id} className="team-player ellipsis">{player.nickname}</div>
+                      <div key={player.user_custom_id} className="player-score-row">
+                        <div className="player-name ellipsis">{player.nickname}</div>
+                        <div className="score-input">
+                          <Input
+                            type="number"
+                            placeholder="得分"
+                            value={getPlayerScoreDisplayValue(player.user_custom_id)}
+                            onChange={value => handlePlayerScoreChange(player.user_custom_id, value)}
+                            step="0.5"
+                            min={0}
+                            style={{ '--text-align': 'center' }}
+                          />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
                 <div className="vs-divider">VS</div>
                 <div className="team vertical-team">
-                  <h4>蓝队</h4>
+                  <h4>蓝队 ({getTeamTotalScore(combo2v2.slice(2, 4))})</h4>
                   <div className="team-list">
                     {combo2v2.slice(2, 4).map(player => (
-                      <div key={player.user_custom_id} className="team-player ellipsis">{player.nickname}</div>
+                      <div key={player.user_custom_id} className="player-score-row">
+                        <div className="player-name ellipsis">{player.nickname}</div>
+                        <div className="score-input">
+                          <Input
+                            type="number"
+                            placeholder="得分"
+                            value={getPlayerScoreDisplayValue(player.user_custom_id)}
+                            onChange={value => handlePlayerScoreChange(player.user_custom_id, value)}
+                            step="0.5"
+                            min={0}
+                            style={{ '--text-align': 'center' }}
+                          />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -227,24 +304,82 @@ export default function Match() {
         <Card title="匹配结果" style={{ marginTop: 16 }}>
           <div className="match-result">
             <div className="team vertical-team">
-              <h4>红队</h4>
+              <h4>红队 ({getTeamTotalScore(matchResult.team1)})</h4>
               <div className="team-list">
                 {matchResult.team1.map(player => (
-                  <div key={player.user_custom_id} className="team-player ellipsis">{player.nickname}</div>
+                  <div key={player.user_custom_id} className="player-score-row">
+                    <div className="player-name ellipsis">{player.nickname}</div>
+                    <div className="score-input">
+                      <Input
+                        type="number"
+                        placeholder="进球"
+                        value={getPlayerScoreDisplayValue(player.user_custom_id)}
+                        onChange={value => handlePlayerScoreChange(player.user_custom_id, value)}
+                        step="0.5"
+                        min={0}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
             <div className="vs-divider">VS</div>
             <div className="team vertical-team">
-              <h4>蓝队</h4>
+              <h4>蓝队 ({getTeamTotalScore(matchResult.team2)})</h4>
               <div className="team-list">
                 {matchResult.team2.map(player => (
-                  <div key={player.user_custom_id} className="team-player ellipsis">{player.nickname}</div>
+                  <div key={player.user_custom_id} className="player-score-row">
+                    <div className="player-name ellipsis">{player.nickname}</div>
+                    <div className="score-input">
+                      <Input
+                        type="number"
+                        placeholder="进球"
+                        value={getPlayerScoreDisplayValue(player.user_custom_id)}
+                        onChange={value => handlePlayerScoreChange(player.user_custom_id, value)}
+                        step="0.5"
+                        min={0}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           </div>
         </Card>
+      )}
+
+      {/* 操作按钮 */}
+      {!isMatchStarted ? (
+        <Button
+          block
+          color="primary"
+          size="large"
+          loading={isLoading}
+          disabled={!canStartMatch}
+          onClick={handleStartMatch}
+          style={{ marginTop: 16 }}
+        >
+          {isLoading ? '匹配中...' : '开始匹配'}
+        </Button>
+      ) : (
+        <div className="action-buttons">
+          <Button
+            color="primary"
+            size="large"
+            onClick={handleSettle}
+            style={{ flex: 1, marginRight: 8 }}
+          >
+            结算
+          </Button>
+          <Button
+            color="default"
+            size="large"
+            onClick={handleCancel}
+            style={{ flex: 1, marginLeft: 8 }}
+          >
+            取消
+          </Button>
+        </div>
       )}
 
       {/* Buff 卡片 */}
@@ -275,21 +410,22 @@ export default function Match() {
         .player-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 12px;
+          gap: 8px;
           margin-bottom: 16px;
         }
         
         .player-item {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 12px;
+          gap: 6px;
+          padding: 8px 10px;
           background-color: #f8f9fa;
-          border-radius: 8px;
+          border-radius: 6px;
           border: 1px solid #e9ecef;
           cursor: pointer;
           transition: box-shadow 0.18s, border-color 0.18s;
           outline: none;
+          min-height: 36px;
         }
         
         .player-item:active, .player-item:focus {
@@ -302,8 +438,9 @@ export default function Match() {
         }
         
         .player-name {
-          font-size: 14px;
+          font-size: 13px;
           color: #333;
+          font-weight: 500;
         }
         
         .match-info {
@@ -338,21 +475,35 @@ export default function Match() {
           flex-direction: column;
           gap: 8px;
           width: 100%;
+          margin-bottom: 12px;
         }
         
-        .team-player {
+        .player-score-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
           padding: 8px 12px;
-          background-color: #f8f9fa;
-          border-radius: 6px;
-          text-align: center;
+          justify-content: space-between;
+        }
+        
+        .player-score-row .player-name {
+          flex: 1;
+          text-align: left;
           font-size: 14px;
           color: #333;
-          max-width: 90px;
-          min-width: 60px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          margin: 0 auto;
+          max-width: 80px;
+          background-color: #f8f9fa;
+          padding: 8px 12px;
+          border-radius: 6px;
+          text-align: center;
+        }
+        
+        .score-input {
+          width: 48px;
+          flex-shrink: 0;
+          background-color: #f8f9fa;
+          padding: 8px 2px;
+          border-radius: 6px;
         }
         
         .ellipsis {
@@ -365,7 +516,6 @@ export default function Match() {
           font-weight: bold;
           font-size: 20px;
           color: #e74c3c;
-          margin: 0 12px;
           letter-spacing: 2px;
           user-select: none;
           align-self: center;
@@ -386,10 +536,17 @@ export default function Match() {
           gap: 8px;
         }
         
+        .action-buttons {
+          display: flex;
+          gap: 16px;
+          margin-top: 16px;
+        }
+        
         .buff-card-container {
           display: flex;
           justify-content: center;
           margin-bottom: 24px;
+          margin-top: 16px;
         }
         .buff-card {
           width: calc(100vw - 24px);
