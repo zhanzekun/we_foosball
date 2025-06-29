@@ -116,7 +116,7 @@ export default function SignupPage() {
           router.push('/home')
         }, 1000)
       } else {
-        throw new Error(result.message || '注册失败')
+        throw new Error('注册失败')
       }
     } catch (error) {
       console.error('注册错误:', error)
