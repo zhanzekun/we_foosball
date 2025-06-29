@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSession, signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from 'antd-mobile'
@@ -8,26 +8,62 @@ import { Button } from 'antd-mobile'
 export default function WelcomePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [isCheckingRegistration, setIsCheckingRegistration] = useState(false)
 
   useEffect(() => {
     if (status === 'authenticated' && session) {
-      router.push('/home')
+      checkUserRegistration()
     }
-  }, [session, status, router])
+  }, [session, status])
+
+  const checkUserRegistration = async () => {
+    if (!session?.user?.email) return
+
+    setIsCheckingRegistration(true)
+
+    try {
+      // 检查用户是否已注册
+      const response = await fetch('/api/users/check-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: session.user.email,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.isRegistered) {
+        // 用户已注册，跳转到主页
+        router.push('/home')
+      } else {
+        // 用户未注册，跳转到注册页面
+        router.push('/signup')
+      }
+    } catch (error) {
+      console.error('检查用户注册状态失败:', error)
+      // 出错时默认跳转到注册页面
+      router.push('/signup')
+    } finally {
+      setIsCheckingRegistration(false)
+    }
+  }
 
   const handleGoogleLogin = () => {
-    signIn('google', { callbackUrl: '/home' })
+    signIn('google')
   }
 
   const handleGithubLogin = () => {
-    signIn('github', { callbackUrl: '/home' })
+    signIn('github')
   }
 
-  if (status === 'loading') {
+  if (status === 'loading' || isCheckingRegistration) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>加载中...</p>
+        <p>{isCheckingRegistration ? '检查用户信息...' : '加载中...'}</p>
       </div>
     )
   }

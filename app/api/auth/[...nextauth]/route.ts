@@ -2,8 +2,6 @@ import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import GithubProvider from 'next-auth/providers/github'
 
-console.log('env',process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GITHUB_ID, process.env.GITHUB_SECRET)
-
 const handler = NextAuth({
   providers: [
     GoogleProvider({

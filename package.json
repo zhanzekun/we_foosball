@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.2",
     "antd-mobile": "^5.40.0",
     "antd-mobile-icons": "^0.3.0",
     "lodash": "^4.17.21",
