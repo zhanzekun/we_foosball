@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import type { FC } from 'react'
-import { NavBar, TabBar } from 'antd-mobile'
+import { NavBar, SafeArea, TabBar } from 'antd-mobile'
 import {
   AppOutline,
   MessageOutline,
@@ -23,9 +23,9 @@ enum TabType {
   ME = 'me'
 }
 
-const Bottom: FC<{ activeKey: TabType; onTabChange: (key: TabType) => void }> = ({ 
-  activeKey, 
-  onTabChange 
+const Bottom: FC<{ activeKey: TabType; onTabChange: (key: TabType) => void }> = ({
+  activeKey,
+  onTabChange
 }) => {
   const tabs = [
     {
@@ -51,7 +51,7 @@ const Bottom: FC<{ activeKey: TabType; onTabChange: (key: TabType) => void }> = 
   ]
 
   return (
-    <TabBar activeKey={activeKey} onChange={value => onTabChange(value as TabType)}  safeArea={true}>
+    <TabBar activeKey={activeKey} onChange={value => onTabChange(value as TabType)} safeArea={true}>
       {tabs.map(item => (
         <TabBar.Item key={item.key} icon={item.icon} title={item.title} />
       ))}
@@ -73,7 +73,7 @@ function HomePage() {
     }
     const checkUserExists = async () => {
       if (!session?.user?.email) return
-      
+
       // 查询 user 表，使用 email 作为唯一标识
       const { data, error } = await supabase
         .from('user')
@@ -104,7 +104,7 @@ function HomePage() {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #f7fcff;
           }
           .loading-spinner {
             width: 40px;
@@ -145,13 +145,19 @@ function HomePage() {
 
   return (
     <div className="app">
+      <div style={{ background: '#f7fcff' }}>
+        <SafeArea position='top' />
+      </div>
       <div className="body">
         {renderContent()}
       </div>
       <div className="bottom">
-        <Bottom activeKey={activeTab} onTabChange={handleTabChange}/>
+        <Bottom activeKey={activeTab} onTabChange={handleTabChange} />
       </div>
-      
+      <div style={{ background: '#f7fcff' }}>
+        <SafeArea position='bottom' />
+      </div>
+
       <style jsx>{`
         .app {
           height: 100vh;

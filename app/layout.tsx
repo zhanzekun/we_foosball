@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <head>
-        <meta name="theme-color" content="#667eea" />
+        <meta name="theme-color" content="#f7fcff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="icon" href="/app_logo.svg" />

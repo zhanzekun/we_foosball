@@ -141,7 +141,7 @@ export default function UserPage() {
       <style jsx>{`
         .user-page {
           min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background-color: #f7fcff;
           padding: 20px;
         }
 
