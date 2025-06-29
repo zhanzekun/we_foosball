@@ -9,8 +9,8 @@ const handler = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     GithubProvider({
-      clientId: process.env.GITHUB_ID || '',
-      clientSecret: process.env.GITHUB_SECRET || '',
+      clientId: process.env.NODE_ENV === 'production' ? process.env.GITHUB_ID || '' : process.env.GITHUB_ID_DEV || '',
+      clientSecret: process.env.NODE_ENV === 'production' ? process.env.GITHUB_SECRET || '' : process.env.GITHUB_SECRET_DEV || '',
     }),
   ],
   pages: {

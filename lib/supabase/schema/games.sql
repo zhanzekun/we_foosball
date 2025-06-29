@@ -1,7 +1,7 @@
-create table public.user (
+create table public.games (
   id uuid not null default gen_random_uuid (),
   created_at timestamp with time zone not null default now(),
-  user_custom_id text null,
-  nickname text null,
-  constraint user_pkey primary key (id)
+  winner_team_index smallint null,
+  game_buff_id text null,
+  constraint games_pkey primary key (id)
 ) TABLESPACE pg_default;

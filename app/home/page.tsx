@@ -51,7 +51,7 @@ const Bottom: FC<{ activeKey: TabType; onTabChange: (key: TabType) => void }> = 
   ]
 
   return (
-    <TabBar activeKey={activeKey} onChange={value => onTabChange(value as TabType)}>
+    <TabBar activeKey={activeKey} onChange={value => onTabChange(value as TabType)}  safeArea={true}>
       {tabs.map(item => (
         <TabBar.Item key={item.key} icon={item.icon} title={item.title} />
       ))}
@@ -149,7 +149,7 @@ function HomePage() {
         {renderContent()}
       </div>
       <div className="bottom">
-        <Bottom activeKey={activeTab} onTabChange={handleTabChange} />
+        <Bottom activeKey={activeTab} onTabChange={handleTabChange}/>
       </div>
       
       <style jsx>{`
