@@ -27,7 +27,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       <div className="loading-container">
         <div className="loading-spinner"></div>
         <p>验证登录状态...</p>
-        
+
         <style jsx>{`
           .loading-container {
             min-height: 100vh;
@@ -35,7 +35,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: '#f7fcff',
           }
           
           .loading-spinner {

@@ -31,7 +31,7 @@ export default function SignupPage() {
       <div className="loading-container">
         <div className="loading-spinner"></div>
         <p>加载中...</p>
-        
+
         <style jsx>{`
           .loading-container {
             min-height: 100vh;
@@ -110,7 +110,7 @@ export default function SignupPage() {
           content: '注册成功！',
           position: 'center',
         })
-        
+
         // 跳转到主页
         setTimeout(() => {
           router.push('/home')
@@ -192,7 +192,7 @@ export default function SignupPage() {
       <style jsx>{`
         .signup-container {
           min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: '#f7fcff',
           padding: 20px;
           display: flex;
           align-items: center;
