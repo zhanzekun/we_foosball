@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession, signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from 'antd-mobile'
+import supabase from '@/lib/supabase/client'
 
 export default function WelcomePage() {
   const { data: session, status } = useSession()
@@ -23,19 +24,19 @@ export default function WelcomePage() {
 
     try {
       // 检查用户是否已注册
-      const response = await fetch('/api/users/check-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: session.user.email,
-        }),
-      })
+      const { data, error } = await supabase
+        .from('user')
+        .select('user_custom_id')
+        .eq('user_custom_id', session.user.email)
+        .maybeSingle()
 
-      const result = await response.json()
+      if (error) {
+        throw new Error(error.message || '检查用户状态失败')
+      }
 
-      if (result.isRegistered) {
+      const isRegistered = !!data
+
+      if (isRegistered) {
         // 用户已注册，跳转到主页
         router.push('/home')
       } else {

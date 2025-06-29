@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Form, Input, Button, Toast } from 'antd-mobile'
+import supabase from '@/lib/supabase/client'
 
 interface SignupForm {
   nickname: string
@@ -77,19 +78,26 @@ export default function SignupPage() {
     setIsSubmitting(true)
 
     try {
-      // 调用 API 保存用户信息
-      const response = await fetch('/api/users/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: session.user.email,
-          name: session.user.name,
-          nickname: values.nickname,
-          image: session.user.image,
-        }),
-      })
+      // 调用 Supabase API 保存用户信息
+      const { data, error } = await supabase
+        .from('user')
+        .insert([
+          {
+            user_custom_id: session.user.email,
+            nickname: values.nickname,
+          }
+        ])
+        .select()
+
+      if (error) {
+        throw new Error(error.message || '注册失败')
+      }
+
+      // 模拟 API 响应格式以保持兼容性
+      const response = {
+        ok: true,
+        json: async () => ({ success: true, data })
+      }
 
       if (!response.ok) {
         throw new Error('注册失败')

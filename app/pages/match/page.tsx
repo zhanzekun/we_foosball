@@ -2,24 +2,11 @@
 
 import React, { useState, useEffect } from 'react'
 import { Card, Button, Checkbox, Toast } from 'antd-mobile'
-
-// 模拟接口数据
-const mockPlayers = [
-  { id: 1, name: '张三' },
-  { id: 2, name: '李四' },
-  { id: 3, name: '王五' },
-  { id: 4, name: '赵六' },
-  { id: 5, name: '钱七' },
-  { id: 6, name: '孙八' },
-  { id: 7, name: '周九' },
-  { id: 8, name: '吴十' },
-  { id: 9, name: '郑十一' },
-  { id: 10, name: '王十二' },
-]
+import supabase from '@/lib/supabase/client'
 
 interface Player {
-  id: number
-  name: string
+  user_custom_id: string
+  nickname: string
 }
 
 interface MatchResult {
@@ -29,7 +16,7 @@ interface MatchResult {
 
 export default function Match() {
   const [players, setPlayers] = useState<Player[]>([])
-  const [selectedPlayers, setSelectedPlayers] = useState<Set<number>>(new Set())
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set())
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -37,13 +24,11 @@ export default function Match() {
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        // 这里应该是真实的 API 调用
-        // const response = await fetch('/api/players')
-        // const data = await response.json()
-        
-        // 模拟 API 延迟
-        await new Promise(resolve => setTimeout(resolve, 500))
-        setPlayers(mockPlayers)
+        const { data, error } = await supabase
+          .from('user')
+          .select('user_custom_id, nickname')
+        if (error) throw error
+        setPlayers(data || [])
       } catch (error) {
         Toast.show({
           content: '获取玩家列表失败',
@@ -56,19 +41,19 @@ export default function Match() {
   }, [])
 
   // 处理玩家选择
-  const handlePlayerSelect = (playerId: number, checked: boolean) => {
+  const handlePlayerSelect = (user_custom_id: string, checked: boolean) => {
     const newSelected = new Set(selectedPlayers)
     if (checked) {
-      newSelected.add(playerId)
+      newSelected.add(user_custom_id)
     } else {
-      newSelected.delete(playerId)
+      newSelected.delete(user_custom_id)
     }
     setSelectedPlayers(newSelected)
   }
 
   // 随机匹配逻辑
-  const performMatch = (selectedPlayerIds: number[]): MatchResult => {
-    const selectedPlayerList = players.filter(player => selectedPlayerIds.includes(player.id))
+  const performMatch = (selectedPlayerIds: string[]): MatchResult => {
+    const selectedPlayerList = players.filter(player => selectedPlayerIds.includes(player.user_custom_id))
     
     // 随机打乱数组
     const shuffled = [...selectedPlayerList].sort(() => Math.random() - 0.5)
@@ -113,12 +98,12 @@ export default function Match() {
       <Card title="选择玩家进行匹配">
         <div className="player-grid">
           {players.map(player => (
-            <div key={player.id} className="player-item">
+            <div key={player.user_custom_id} className="player-item">
               <Checkbox
-                checked={selectedPlayers.has(player.id)}
-                onChange={(checked) => handlePlayerSelect(player.id, checked)}
+                checked={selectedPlayers.has(player.user_custom_id)}
+                onChange={(checked) => handlePlayerSelect(player.user_custom_id, checked)}
               />
-              <span className="player-name">{player.name}</span>
+              <span className="player-name">{player.nickname}</span>
             </div>
           ))}
         </div>
@@ -147,7 +132,7 @@ export default function Match() {
               <h4>红队</h4>
               <div className="team-grid">
                 {matchResult.team1.map(player => (
-                  <div key={player.id} className="team-player">{player.name}</div>
+                  <div key={player.user_custom_id} className="team-player">{player.nickname}</div>
                 ))}
               </div>
             </div>
@@ -156,7 +141,7 @@ export default function Match() {
               <h4>蓝队</h4>
               <div className="team-grid">
                 {matchResult.team2.map(player => (
-                  <div key={player.id} className="team-player">{player.name}</div>
+                  <div key={player.user_custom_id} className="team-player">{player.nickname}</div>
                 ))}
               </div>
             </div>

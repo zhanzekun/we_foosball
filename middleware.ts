@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { updateSession } from './lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -23,6 +24,9 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/', request.url)
     return NextResponse.redirect(loginUrl)
   }
+
+  // supabase
+  await updateSession(request)
 
   // 有 session token，继续访问
   return NextResponse.next()
