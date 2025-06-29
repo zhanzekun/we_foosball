@@ -105,7 +105,7 @@ export default function UserPage() {
     )
   }
 
-  if (!session) {
+  if (!session || !userInfo) {
     return null
   }
 
@@ -119,9 +119,9 @@ export default function UserPage() {
         <Card>
           <List header="用户信息">
             <List.Item
-              prefix={<Avatar src={session.user.image || ''} />}
+              prefix={<Avatar src={session?.user?.image || ''} />}
               title={userInfo?.nickname || '未设置昵称'}
-              description={session.user.email}
+              description={session?.user?.email}
             />
           </List>
         </Card>
