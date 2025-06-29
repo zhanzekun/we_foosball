@@ -92,7 +92,6 @@ function HomePage() {
 
       <style jsx>{`
         .app {
-          height: calc(100vh - 49px);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -107,6 +106,7 @@ function HomePage() {
           flex: 1;
           overflow-y: auto;
           overflow-x: hidden;
+          height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 50px);
         }
 
         .bottom {

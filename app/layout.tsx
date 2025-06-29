@@ -45,8 +45,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{
           background: '#f7fcff',
-          minHeight: '100vh',
-          maxHeight: '100vh',
+          height: 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 49px);',
           paddingTop: 'env(safe-area-inset-top)',
           paddingBottom: 'env(safe-area-inset-bottom)',
           paddingLeft: 'env(safe-area-inset-left)',
