@@ -4,8 +4,7 @@ import React, { useState } from 'react'
 import type { FC } from 'react'
 import { SafeArea, TabBar } from 'antd-mobile'
 import {
-  AppOutline,
-  MessageOutline,
+  HistogramOutline,
   UnorderedListOutline,
   UserOutline,
 } from 'antd-mobile-icons'
@@ -13,6 +12,7 @@ import Match from '../pages/match/page'
 import ProtectedRoute from '../components/ProtectedRoute'
 import UserPage from '../pages/user'
 import TodoPage from '../pages/todo/todo'
+import { Gamepad1Icon } from 'tdesign-icons-react'
 
 enum TabType {
   MATCH = 'match',
@@ -29,17 +29,17 @@ const Bottom: FC<{ activeKey: TabType; onTabChange: (key: TabType) => void }> = 
     {
       key: TabType.MATCH,
       title: '匹配',
-      icon: <AppOutline />,
+      icon: <Gamepad1Icon style={{ marginBottom: '6px' }} />,
     },
     {
       key: TabType.DATA,
-      title: '数据',
-      icon: <UnorderedListOutline />,
+      title: '排行',
+      icon: <HistogramOutline />
     },
     {
       key: TabType.RANK,
-      title: '排行',
-      icon: <MessageOutline />,
+      title: '明细',
+      icon: <UnorderedListOutline />
     },
     {
       key: TabType.ME,

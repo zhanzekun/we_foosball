@@ -44,6 +44,9 @@ importers:
       react-toastify:
         specifier: ^11.0.5
         version: 11.0.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      tdesign-icons-react:
+        specifier: ^0.5.0
+        version: 0.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -930,6 +933,12 @@ packages:
     resolution: {integrity: sha512-5S7Va8hKfV7W5U6g3aYxXmlPoZVAwUMy9AOKyF2fVuZa2UD3qZjg578OrLRt8PcNN1PleVaL/5/yYATNL0ICUw==}
     engines: {node: '>=18'}
 
+  tdesign-icons-react@0.5.0:
+    resolution: {integrity: sha512-Gpl1Kxkb8+YXYjMsSW5W3kWy/drVB/huFLIHWhmJdUnEwUAW0Il+nDyb/BsRi51jLnalBwjYbOELEggH2qp6FQ==}
+    peerDependencies:
+      react: '>=16.13.1'
+      react-dom: '>=16.13.1'
+
   tr46@0.0.3:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
 
@@ -1803,6 +1812,13 @@ snapshots:
       minizlib: 3.0.2
       mkdirp: 3.0.1
       yallist: 5.0.0
+
+  tdesign-icons-react@0.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      '@babel/runtime': 7.27.6
+      classnames: 2.5.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   tr46@0.0.3: {}
 

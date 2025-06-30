@@ -9,16 +9,9 @@ import useMatchStore from '@/store/match'
 import { BuffCard, MatchResult, Player, PlayerScore } from '@/types'
 import Image from 'next/image'
 import { winnerDefaultIndex, TEAM_INDEX_RED, TEAM_INDEX_BLUE } from '@/const'
-
-
-const winnerIcon = (
-  <Image
-    src="/trophy_1184688.png"
-    alt="胜利"
-    width={20}
-    height={20}
-  />
-)
+import RulesPage from '../rules/page'
+import { WinnerIcon } from '@/app/components/WinnerIcon'
+import { rankMatch } from '@/lib/rankMatch'
 
 export default function Match() {
   const [isLoading, setIsLoading] = useState(false)
@@ -129,12 +122,8 @@ export default function Match() {
     setIsLoading(true)
 
     setTimeout(() => {
-      const selectedArr = Array.from(selectedPlayers)
-
-      // 随机选4人做2v2
-      const shuffled = [...selectedArr].sort(() => Math.random() - 0.5)
-      const twoVtwoIds = shuffled.slice(0, 4)
-      const twoVtwoPlayers = players.filter(p => twoVtwoIds.includes(p.user_custom_id))
+      const selectedPlayersList = players.filter(p => selectedPlayers.has(p.user_custom_id))
+      const twoVtwoPlayers = rankMatch(selectedPlayersList)
       setCombo2v2(twoVtwoPlayers)
       setShow2v2(true)
       setMatchResult(null)
@@ -174,6 +163,12 @@ export default function Match() {
   const handleSettle = async () => {
     if (winnerTeamIndex === null) {
       // 请选择获胜队伍
+      return
+    }
+
+    // 检查是否所有玩家都填写了分数
+    if (!canSettle()) {
+      // 请填写每个玩家的得分
       return
     }
 
@@ -223,6 +218,12 @@ export default function Match() {
   const selectedCount = selectedPlayers.size
   const canStartMatch = selectedCount >= 4
 
+  // 检查至少有1个玩家填写了分数
+  const canSettle = () => {
+    if (!combo2v2 || combo2v2.length !== 4) return false
+    return combo2v2.some(player => playerScores[player.user_custom_id] !== undefined)
+  }
+
   const handleBuffClick = async () => {
     // 移除点击处理逻辑
   }
@@ -238,7 +239,7 @@ export default function Match() {
       <div className="buff-card-container">
         <div className="buff-card">
           <div className="buff-card-content">
-            <div className="buff-name">{buff ? buff.name : '加载中...'}</div>
+            <div className="buff-name">{buff ? `今日BUFF：${buff.name}` : '加载中...'}</div>
             <div className="buff-desc">{buff ? buff.description : ''}</div>
           </div>
         </div>
@@ -347,7 +348,7 @@ export default function Match() {
                 >
                   <div className={`team-header ${winnerTeamIndex === TEAM_INDEX_RED ? 'winner' : ''}`} onClick={() => handleTeamSelect(TEAM_INDEX_RED)}>
                     <div className="winner-icon-placeholder">
-                      {winnerTeamIndex === TEAM_INDEX_RED && winnerIcon}
+                      {WinnerIcon(winnerTeamIndex === TEAM_INDEX_RED)}
                     </div>
                     <h4>
                       红队
@@ -378,7 +379,7 @@ export default function Match() {
                 >
                   <div className={`team-header ${winnerTeamIndex === TEAM_INDEX_BLUE ? 'winner' : ''}`} onClick={() => handleTeamSelect(TEAM_INDEX_BLUE)}>
                     <div className="winner-icon-placeholder">
-                      {winnerTeamIndex === TEAM_INDEX_BLUE && winnerIcon}
+                      {WinnerIcon(winnerTeamIndex === TEAM_INDEX_BLUE)}
                     </div>
                     <h4>
                       蓝队
@@ -416,7 +417,7 @@ export default function Match() {
             color="primary"
             size="large"
             loading={isSubmitting}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !canSettle()}
             onClick={handleSettle}
             style={{ flex: 1, marginRight: 8 }}
           >
@@ -438,48 +439,7 @@ export default function Match() {
       <Modal
         visible={showRulesModal}
         title="比分填写规则"
-        content={
-          <div style={{ padding: '16px 0' }}>
-            <div style={{ marginBottom: '16px' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>📝 得分规则</h4>
-              <ul style={{ margin: 0, paddingLeft: '20px', color: '#666', lineHeight: '1.6' }}>
-                <li>每个玩家输入自己的进球数</li>
-                <li>支持小数，如 0.5、1.5 等</li>
-              </ul>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>🏆 获胜规则</h4>
-              <ul style={{ margin: 0, paddingLeft: '20px', color: '#666', lineHeight: '1.6' }}>
-                <li>点击红队或蓝队区域选择获胜队伍</li>
-                <li>获胜队伍旁会显示奖杯图标</li>
-                <li>获胜队伍与得分总和无关，由裁判决定</li>
-                <li>必须选择获胜队伍才能结算比赛</li>
-              </ul>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>⚽ 示例说明</h4>
-              <div style={{ color: '#666', lineHeight: '1.6' }}>
-                <p style={{ margin: '4px 0' }}><strong>红队：</strong></p>
-                <p style={{ margin: '4px 0' }}>• A1 得分：1.5</p>
-                <p style={{ margin: '4px 0' }}>• A2 得分：0.5</p>
-                <p style={{ margin: '8px 0' }}><strong>蓝队：</strong></p>
-                <p style={{ margin: '4px 0' }}>• B1 得分：2</p>
-                <p style={{ margin: '4px 0' }}>• B2 得分：0</p>
-                <p style={{ margin: '8px 0' }}><strong>结果：</strong>点击红队或蓝队选择获胜方</p>
-              </div>
-            </div>
-
-            <div>
-              <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>🎯 特殊情况</h4>
-              <ul style={{ margin: 0, paddingLeft: '20px', color: '#666', lineHeight: '1.6' }}>
-                <li>乌龙球：玩家打进自己球门，计入该玩家得分</li>
-                <li>意外得分：非正常进球，计入相应玩家得分</li>
-              </ul>
-            </div>
-          </div>
-        }
+        content={<RulesPage />}
         closeOnAction
         onClose={() => setShowRulesModal(false)}
         actions={[
@@ -555,7 +515,6 @@ export default function Match() {
         
         .match-result {
           display: flex;
-          gap: 16px;
           align-items: stretch;
           justify-content: center;
         }
@@ -565,7 +524,7 @@ export default function Match() {
           flex-direction: column;
           align-items: center;
           flex: 1;
-          padding: 16px;
+          padding: 4px;
           border-radius: 12px;
           cursor: pointer;
           position: relative;
@@ -660,6 +619,7 @@ export default function Match() {
           display: flex;
           align-items: center;
           height: auto;
+          margin-left:8px;
         }
         
         .team h4 {
