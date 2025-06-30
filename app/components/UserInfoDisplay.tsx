@@ -22,7 +22,7 @@ export default function UserInfoDisplay({
   if (isLoading) {
     return (
       <div className="user-info-loading">
-        <div className="loading-dot"></div>
+        <div className="loading-spinner"></div>
         <span>加载中...</span>
       </div>
     )

@@ -86,18 +86,7 @@ function HomePage() {
         <SafeArea position='top' />
       </div>
       <div className="body">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.1, ease: "easeInOut" }}
-            style={{ height: '100%' }}
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
+        {renderContent()}
       </div>
       <div className="bottom">
         <Bottom activeKey={activeTab} onTabChange={handleTabChange} />

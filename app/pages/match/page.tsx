@@ -11,6 +11,7 @@ import { winnerDefaultIndex, TEAM_INDEX_RED, TEAM_INDEX_BLUE } from '@/const'
 import RulesPage from '../rules/page'
 import { WinnerIcon } from '@/app/components/WinnerIcon'
 import { rankMatch } from '@/lib/rankMatch'
+import { backgroundColor } from '@/const/style'
 
 export default function Match() {
   const [isLoading, setIsLoading] = useState(false)
@@ -452,7 +453,7 @@ export default function Match() {
           align-items: center;
           gap: 6px;
           padding: 8px 10px;
-          background-color: #f8f9fa;
+          background-color: ${backgroundColor};
           border-radius: 6px;
           border: 1px solid #e9ecef;
           cursor: pointer;

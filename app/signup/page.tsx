@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Form, Input, Button, Selector } from 'antd-mobile'
 import supabase from '@/lib/supabase/client'
 import { positionOptions } from '@/const'
+import { backgroundColor } from '@/const/style'
 
 interface SignupForm {
   nickname: string
@@ -42,7 +43,7 @@ export default function SignupPage() {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: ${backgroundColor};
           }
           
           .loading-spinner {
