@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Form, Input, Button, Toast } from 'antd-mobile'
+import { Form, Input, Button, Selector } from 'antd-mobile'
 import supabase from '@/lib/supabase/client'
 
 interface SignupForm {
   nickname: string
+  position: string
 }
 
 export default function SignupPage() {
@@ -15,13 +16,14 @@ export default function SignupPage() {
   const router = useRouter()
   const [form] = Form.useForm()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedPosition, setSelectedPosition] = useState<number>(1)
 
   // 如果用户未登录，重定向到登录页
   useEffect(() => {
     if (status === 'loading') return
 
     if (!session) {
-      router.push('/')
+      router.replace('/')
     }
   }, [session, status, router])
 
@@ -67,24 +69,20 @@ export default function SignupPage() {
   }
 
   const handleSubmit = async (values: SignupForm) => {
-    if (!session.user?.email) {
-      Toast.show({
-        content: '用户信息不完整',
-        position: 'center',
-      })
+    if (!selectedPosition) {
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      // 调用 Supabase API 保存用户信息
       const { data, error } = await supabase
         .from('user')
         .insert([
           {
-            user_custom_id: session.user.email,
+            user_custom_id: session.user?.email,
             nickname: values.nickname,
+            position: selectedPosition,
           }
         ])
         .select()
@@ -106,24 +104,15 @@ export default function SignupPage() {
       const result = await response.json()
 
       if (result.success) {
-        Toast.show({
-          content: '注册成功！',
-          position: 'center',
-        })
-
         // 跳转到主页
         setTimeout(() => {
-          router.push('/home')
+          router.replace('/home')
         }, 1000)
       } else {
         throw new Error('注册失败')
       }
     } catch (error) {
       console.error('注册错误:', error)
-      Toast.show({
-        content: error instanceof Error ? error.message : '注册失败，请重试',
-        position: 'center',
-      })
     } finally {
       setIsSubmitting(false)
     }
@@ -174,38 +163,70 @@ export default function SignupPage() {
             />
           </Form.Item>
 
-          <Form.Item>
-            <Button
-              block
-              type="submit"
-              color="primary"
-              size="large"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? '注册中...' : '完成注册'}
-            </Button>
+          <Form.Item
+            name="position"
+            label="场上位置"
+            rules={[
+              { required: true, message: '请选择您的场上位置' }
+            ]}
+          >
+            <Selector
+              options={positionOptions}
+              columns={3}
+              defaultValue={[]}
+              onChange={(arr) => setSelectedPosition(arr[0] || 3)}
+              style={{
+                '--border-radius': '8px',
+                '--checked-color': '#1677ff',
+                '--checked-text-color': '#fff',
+              }}
+            />
           </Form.Item>
         </Form>
+
+        <div className="submit-button-container">
+          <Button
+            block
+            type="submit"
+            color="primary"
+            size="large"
+            loading={isSubmitting}
+            disabled={isSubmitting}
+            onClick={() => {
+              form.validateFields().then(handleSubmit)
+            }}
+          >
+            {isSubmitting ? '注册中...' : '完成注册'}
+          </Button>
+        </div>
       </div>
 
       <style jsx>{`
         .signup-container {
-          min-height: 100vh;
-          background: '#f7fcff',
           padding: 20px;
-          display: flex;
-          align-items: center;
+          padding-top: calc(20px + env(safe-area-inset-top));
+          padding-bottom: calc(50px + env(safe-area-inset-bottom));
+          box-sizing: border-box;
+          background: #f7fcff;
           justify-content: center;
+          display: flex;
+          flex: 1;
+          height: 100%;
         }
 
         .signup-content {
           background: white;
           padding: 40px 30px;
+          padding-bottom: calc(40px + 48px + 20px); /* 为底部按钮预留空间 */
           border-radius: 16px;
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
           max-width: 400px;
           width: 100%;
+          max-height: calc(100vh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          position: relative;
         }
 
         .welcome-section {
@@ -260,7 +281,16 @@ export default function SignupPage() {
         }
 
         .signup-form {
-          margin-top: 20px;
+          flex: 1;
+        }
+
+        .submit-button-container {
+          position: absolute;
+          bottom: 48px;
+          left: 30px;
+          right: 30px;
+          background: white;
+          padding-top: 20px;
         }
       `}</style>
     </div>

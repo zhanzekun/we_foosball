@@ -11,11 +11,13 @@ import {
 } from 'antd-mobile-icons'
 import Match from '../pages/match/page'
 import ProtectedRoute from '../components/ProtectedRoute'
+import UserPage from '../pages/user'
+import TodoPage from '../pages/todo/todo'
 
 enum TabType {
   MATCH = 'match',
-  TODO = 'todo',
-  MESSAGE = 'message',
+  DATA = 'data',
+  RANK = 'rank',
   ME = 'me'
 }
 
@@ -30,13 +32,13 @@ const Bottom: FC<{ activeKey: TabType; onTabChange: (key: TabType) => void }> = 
       icon: <AppOutline />,
     },
     {
-      key: TabType.TODO,
-      title: '待办',
+      key: TabType.DATA,
+      title: '数据',
       icon: <UnorderedListOutline />,
     },
     {
-      key: TabType.MESSAGE,
-      title: '消息',
+      key: TabType.RANK,
+      title: '排行',
       icon: <MessageOutline />,
     },
     {
@@ -66,12 +68,12 @@ function HomePage() {
     switch (activeTab) {
       case TabType.MATCH:
         return <Match />
-      case TabType.TODO:
+      case TabType.DATA:
         return <Todo />
-      case TabType.MESSAGE:
-        return <Message />
+      case TabType.RANK:
+        return <Todo />
       case TabType.ME:
-        return <PersonalCenter />
+        return <UserPage />
       default:
         return <Match />
     }
@@ -121,7 +123,7 @@ function HomePage() {
 }
 
 function Todo() {
-  return <div>待办</div>
+  return <TodoPage />
 }
 
 function Message() {

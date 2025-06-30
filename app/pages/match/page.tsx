@@ -1,54 +1,99 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Card, Button, Checkbox, Input } from 'antd-mobile'
+import { Card, Button, Checkbox, Input, Modal } from 'antd-mobile'
+import { RedoOutline, QuestionCircleOutline } from 'antd-mobile-icons'
 import supabase from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
-// 只用于类型提示
-type BuffCard = { name: string; description: string };
+import useMatchStore from '@/store/match'
+import { BuffCard, MatchResult, Player, PlayerScore } from '@/types'
+import Image from 'next/image'
 
-interface Player {
-  user_custom_id: string
-  nickname: string
-}
+const winnerDefaultIndex = 1
+const TEAM_INDEX_RED = 1
+const TEAM_INDEX_BLUE = 2
 
-interface MatchResult {
-  team1: Player[]
-  team2: Player[]
-}
-
-interface PlayerScore {
-  [playerId: string]: number
-}
+const winnerIcon = (
+  <Image
+    src="/trophy_1184688.png"
+    alt="胜利"
+    width={20}
+    height={20}
+  />
+)
 
 export default function Match() {
-  const [players, setPlayers] = useState<Player[]>([])
-  const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set())
-  const [matchResult, setMatchResult] = useState<MatchResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [show2v2, setShow2v2] = useState(false)
-  const [combo2v2, setCombo2v2] = useState<Player[] | null>(null)
-  const [isBuffFlipped, setIsBuffFlipped] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [buff, setBuff] = useState<BuffCard | null>(null)
-  const [playerScores, setPlayerScores] = useState<PlayerScore>({})
-  const [isMatchStarted, setIsMatchStarted] = useState(false)
-  const buffCardRef = useRef<HTMLDivElement>(null)
+  const [showRulesModal, setShowRulesModal] = useState(false)
+  const [winnerTeamIndex, setWinnerTeamIndex] = useState<number>(winnerDefaultIndex)
+
+  // 使用 store
+  const {
+    forceRefreshPlayers,
+    players,
+    selectedPlayers,
+    setSelectedPlayers,
+    matchResult,
+    setMatchResult,
+    isMatchStarted,
+    setIsMatchStarted,
+    show2v2,
+    setShow2v2,
+    combo2v2,
+    setCombo2v2,
+    playerScores,
+    setPlayerScores
+  } = useMatchStore()
+
+  // 刷新玩家列表
+  const refreshPlayers = async () => {
+    setIsRefreshing(true)
+    try {
+      // 使用 store 中的强制刷新方法
+      await forceRefreshPlayers()
+    } catch (error) {
+      console.error('刷新玩家列表失败:', error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   // 获取玩家列表
   useEffect(() => {
-    const fetchPlayers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user')
-          .select('user_custom_id, nickname')
-        if (error) throw error
-        setPlayers(data || [])
-      } catch (error) {
-        // 获取玩家列表失败
+    const { refreshPlayers } = useMatchStore.getState()
+    refreshPlayers()
+  }, [])
+
+  // 获取当前buff
+  useEffect(() => {
+    const fetchBuff = async () => {
+      // 获取当前日期
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const today = `${yyyy}-${mm}-${dd}`;
+      // 判断上午/下午
+      const hour = now.getHours();
+      const period = hour < 14 ? 'am' : 'pm';
+      // 查询 supabase
+      const { data, error } = await supabase
+        .from('buff_history')
+        .select('buff_name, buff_description')
+        .eq('date', today)
+        .eq('period', period)
+        .maybeSingle();
+      if (data) {
+        setBuff({ name: data.buff_name, description: data.buff_description });
+      } else {
+        setBuff({ name: '暂无Buff', description: '今日Buff尚未生成' });
       }
     }
 
-    fetchPlayers()
+    fetchBuff()
   }, [])
 
   // 处理玩家选择
@@ -79,7 +124,7 @@ export default function Match() {
   // 开始匹配
   const handleStartMatch = () => {
     if (selectedPlayers.size < 4) {
-      // 请至少选择4名玩家进行匹配
+      // 请至少选择4名玩家进行2v2匹配
       return
     }
 
@@ -87,126 +132,147 @@ export default function Match() {
 
     setTimeout(() => {
       const selectedArr = Array.from(selectedPlayers)
-      if (selectedArr.length > 4) {
-        // 随机选4人做2v2
-        const shuffled = [...selectedArr].sort(() => Math.random() - 0.5)
-        const twoVtwoIds = shuffled.slice(0, 4)
-        const twoVtwoPlayers = players.filter(p => twoVtwoIds.includes(p.user_custom_id))
-        setCombo2v2(twoVtwoPlayers)
-        setShow2v2(true)
-        setMatchResult(null)
-        setIsMatchStarted(true)
-        setIsLoading(false)
-        // 已随机出2v2组合！
-        return
-      }
-      // 正常4人直接2v2
-      if (selectedArr.length === 4) {
-        const twoVtwoPlayers = players.filter(p => selectedArr.includes(p.user_custom_id))
-        setCombo2v2(twoVtwoPlayers)
-        setShow2v2(true)
-        setMatchResult(null)
-        setIsMatchStarted(true)
-        setIsLoading(false)
-        // 已随机出2v2组合！
-        return
-      }
-      // 8人正常4v4
-      const result = performMatch(selectedArr)
-      setMatchResult(result)
-      setCombo2v2(null)
-      setShow2v2(false)
+
+      // 随机选4人做2v2
+      const shuffled = [...selectedArr].sort(() => Math.random() - 0.5)
+      const twoVtwoIds = shuffled.slice(0, 4)
+      const twoVtwoPlayers = players.filter(p => twoVtwoIds.includes(p.user_custom_id))
+      setCombo2v2(twoVtwoPlayers)
+      setShow2v2(true)
+      setMatchResult(null)
       setIsMatchStarted(true)
       setIsLoading(false)
-      // 匹配完成！
+      // 已随机出2v2组合！
     }, 1000)
   }
 
   // 处理玩家进球数输入
   const handlePlayerScoreChange = (playerId: string, value: string) => {
     const numValue = parseFloat(value) || 0
-    setPlayerScores(prev => ({
-      ...prev,
-      [playerId]: numValue
-    }))
+    const newPlayerScores = { ...playerScores, [playerId]: numValue }
+    setPlayerScores(newPlayerScores)
   }
 
   // 获取玩家进球数显示值
   const getPlayerScoreDisplayValue = (playerId: string) => {
-    const score = playerScores[playerId] || 0
-    return score === 0 ? '' : score.toString()
+    const score = playerScores[playerId]
+    return score !== undefined ? score.toString() : ''
   }
 
   // 计算队伍总进球数
   const getTeamTotalScore = (teamPlayers: Player[]) => {
     return teamPlayers.reduce((total, player) => {
-      return total + (playerScores[player.user_custom_id] || 0)
+      const score = playerScores[player.user_custom_id]
+      return total + (score !== undefined ? score : 0)
     }, 0)
   }
 
+  // 处理队伍选择
+  const handleTeamSelect = (teamIndex: number) => {
+    setWinnerTeamIndex(teamIndex)
+  }
+
   // 结算比赛
-  const handleSettle = () => {
-    // 这里可以添加保存比赛结果的逻辑
-    const matchData = {
-      team1: combo2v2?.slice(0, 2) || matchResult?.team1,
-      team2: combo2v2?.slice(2, 4) || matchResult?.team2,
-      playerScores,
-      team1Total: getTeamTotalScore(combo2v2?.slice(0, 2) || matchResult?.team1 || []),
-      team2Total: getTeamTotalScore(combo2v2?.slice(2, 4) || matchResult?.team2 || [])
+  const handleSettle = async () => {
+    if (winnerTeamIndex === null) {
+      // 请选择获胜队伍
+      return
     }
 
-    console.log('比赛结果:', matchData)
+    setIsSubmitting(true)
 
-    // 重置状态
-    setSelectedPlayers(new Set())
-    setMatchResult(null)
-    setCombo2v2(null)
-    setShow2v2(false)
-    setIsMatchStarted(false)
-    setPlayerScores({})
+    try {
+      // 这里可以添加保存比赛结果的逻辑
+      const matchData = {
+        team1: combo2v2?.slice(0, 2),
+        team2: combo2v2?.slice(2, 4),
+        playerScores,
+        team1Total: getTeamTotalScore(combo2v2?.slice(0, 2) || []),
+        team2Total: getTeamTotalScore(combo2v2?.slice(2, 4) || []),
+        winnerTeamIndex: winnerTeamIndex
+      }
+
+      // 保存比赛结果
+      const response = await fetch('/api/game/saveSingleGame', {
+        method: 'POST',
+        body: JSON.stringify(matchData)
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        // 使用 store 的 resetMatch 方法
+        useMatchStore.getState().resetMatch()
+        // 重置本地状态
+        setWinnerTeamIndex(winnerDefaultIndex)
+      } else {
+        // 比赛结果保存失败
+      }
+    } catch (error) {
+      // 比赛结果保存失败
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   // 取消比赛
   const handleCancel = () => {
-    setMatchResult(null)
-    setCombo2v2(null)
-    setShow2v2(false)
-    setIsMatchStarted(false)
-    setPlayerScores({})
+    // 使用 store 的 resetMatch 方法
+    useMatchStore.getState().resetMatch()
+    // 重置本地状态
+    setWinnerTeamIndex(winnerDefaultIndex)
   }
 
   const selectedCount = selectedPlayers.size
   const canStartMatch = selectedCount >= 4
 
   const handleBuffClick = async () => {
-    if (isBuffFlipped) return;
-    // 获取当前日期
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const today = `${yyyy}-${mm}-${dd}`;
-    // 判断上午/下午
-    const hour = now.getHours();
-    const period = hour < 14 ? 'am' : 'pm';
-    // 查询 supabase
-    const { data, error } = await supabase
-      .from('buff_history')
-      .select('buff_name, buff_description')
-      .eq('date', today)
-      .eq('period', period)
-      .maybeSingle();
-    if (data) {
-      setBuff({ name: data.buff_name, description: data.buff_description });
-    } else {
-      setBuff({ name: '暂无Buff', description: '今日Buff尚未生成' });
-    }
-    setIsBuffFlipped(true);
+    // 移除点击处理逻辑
+  }
+
+  // 显示规则说明
+  const showRules = () => {
+    setShowRulesModal(true)
   }
 
   return (
     <div className="match-container">
-      <Card title="选择玩家进行匹配">
+      {/* Buff 卡片 */}
+      <div className="buff-card-container">
+        <div className="buff-card">
+          <div className="buff-card-content">
+            <div className="buff-name">{buff ? buff.name : '加载中...'}</div>
+            <div className="buff-desc">{buff ? buff.description : ''}</div>
+          </div>
+        </div>
+      </div>
+
+      <Card
+        title={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>选择玩家进行匹配</span>
+            <Button
+              size="mini"
+              loading={isRefreshing}
+              onClick={(e) => {
+                e.stopPropagation()
+                refreshPlayers()
+              }}
+              style={{
+                width: '16px',
+                height: '16px',
+                padding: '0',
+                marginLeft: '8px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <RedoOutline style={{ fontSize: '16px' }} />
+            </Button>
+          </div>
+        }
+      >
         <div className="player-grid">
           {players.map(player => {
             const checked = selectedPlayers.has(player.user_custom_id);
@@ -228,15 +294,31 @@ export default function Match() {
                   onChange={(checked) => handlePlayerSelect(player.user_custom_id, checked)}
                   onClick={e => e.stopPropagation()}
                 />
-                <span className="player-name">{player.nickname}</span>
+                <span className="player-name">{player.nickname} [{player.position === 1 ? '前锋' : player.position === 2 ? '后卫' : '全能'}]</span>
               </div>
             )
           })}
         </div>
 
-        <div className="match-info">
-          <p>已选择: {selectedCount} 人</p>
-        </div>
+        {/* 开始匹配按钮 */}
+        {!isMatchStarted && (
+          <div className="start-match-container">
+            <Button
+              color="primary"
+              size="middle"
+              loading={isLoading}
+              disabled={!canStartMatch}
+              onClick={handleStartMatch}
+              style={{
+                width: '200px',
+                margin: '0 auto',
+                display: 'block'
+              }}
+            >
+              {isLoading ? '匹配中...' : '开始匹配'}
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* 2v2 组合展示 */}
@@ -249,10 +331,30 @@ export default function Match() {
             transition={{ duration: 0.4 }}
             key="2v2"
           >
-            <Card title="2v2 随机组合" style={{ marginTop: 16 }}>
+            <Card
+              title={
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>2v2 匹配组合</span>
+                  <QuestionCircleOutline
+                    style={{ fontSize: '16px', color: '#999', cursor: 'pointer' }}
+                    onClick={showRules}
+                  />
+                </div>
+              }
+              style={{ marginTop: 16 }}
+            >
               <div className="match-result">
-                <div className="team vertical-team">
-                  <h4>红队 ({getTeamTotalScore(combo2v2.slice(0, 2))})</h4>
+                <div
+                  className={`team vertical-team`}
+                >
+                  <div className={`team-header ${winnerTeamIndex === TEAM_INDEX_RED ? 'winner' : ''}`} onClick={() => handleTeamSelect(TEAM_INDEX_RED)}>
+                    <div className="winner-icon-placeholder">
+                      {winnerTeamIndex === TEAM_INDEX_RED && winnerIcon}
+                    </div>
+                    <h4>
+                      红队
+                    </h4>
+                  </div>
                   <div className="team-list">
                     {combo2v2.slice(0, 2).map(player => (
                       <div key={player.user_custom_id} className="player-score-row">
@@ -273,8 +375,17 @@ export default function Match() {
                   </div>
                 </div>
                 <div className="vs-divider">VS</div>
-                <div className="team vertical-team">
-                  <h4>蓝队 ({getTeamTotalScore(combo2v2.slice(2, 4))})</h4>
+                <div
+                  className={`team vertical-team`}
+                >
+                  <div className={`team-header ${winnerTeamIndex === TEAM_INDEX_BLUE ? 'winner' : ''}`} onClick={() => handleTeamSelect(TEAM_INDEX_BLUE)}>
+                    <div className="winner-icon-placeholder">
+                      {winnerTeamIndex === TEAM_INDEX_BLUE && winnerIcon}
+                    </div>
+                    <h4>
+                      蓝队
+                    </h4>
+                  </div>
                   <div className="team-list">
                     {combo2v2.slice(2, 4).map(player => (
                       <div key={player.user_custom_id} className="player-score-row">
@@ -300,80 +411,23 @@ export default function Match() {
         )}
       </AnimatePresence>
 
-      {matchResult && (
-        <Card title="匹配结果" style={{ marginTop: 16 }}>
-          <div className="match-result">
-            <div className="team vertical-team">
-              <h4>红队 ({getTeamTotalScore(matchResult.team1)})</h4>
-              <div className="team-list">
-                {matchResult.team1.map(player => (
-                  <div key={player.user_custom_id} className="player-score-row">
-                    <div className="player-name ellipsis">{player.nickname}</div>
-                    <div className="score-input">
-                      <Input
-                        type="number"
-                        placeholder="进球"
-                        value={getPlayerScoreDisplayValue(player.user_custom_id)}
-                        onChange={value => handlePlayerScoreChange(player.user_custom_id, value)}
-                        step="0.5"
-                        min={0}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="vs-divider">VS</div>
-            <div className="team vertical-team">
-              <h4>蓝队 ({getTeamTotalScore(matchResult.team2)})</h4>
-              <div className="team-list">
-                {matchResult.team2.map(player => (
-                  <div key={player.user_custom_id} className="player-score-row">
-                    <div className="player-name ellipsis">{player.nickname}</div>
-                    <div className="score-input">
-                      <Input
-                        type="number"
-                        placeholder="进球"
-                        value={getPlayerScoreDisplayValue(player.user_custom_id)}
-                        onChange={value => handlePlayerScoreChange(player.user_custom_id, value)}
-                        step="0.5"
-                        min={0}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
-
       {/* 操作按钮 */}
-      {!isMatchStarted ? (
-        <Button
-          block
-          color="primary"
-          size="large"
-          loading={isLoading}
-          disabled={!canStartMatch}
-          onClick={handleStartMatch}
-          style={{ marginTop: 16 }}
-        >
-          {isLoading ? '匹配中...' : '开始匹配'}
-        </Button>
-      ) : (
+      {isMatchStarted && (
         <div className="action-buttons">
           <Button
             color="primary"
             size="large"
+            loading={isSubmitting}
+            disabled={isSubmitting}
             onClick={handleSettle}
             style={{ flex: 1, marginRight: 8 }}
           >
-            结算
+            {isSubmitting ? '保存中...' : '结算'}
           </Button>
           <Button
             color="default"
             size="large"
+            disabled={isSubmitting}
             onClick={handleCancel}
             style={{ flex: 1, marginLeft: 8 }}
           >
@@ -382,29 +436,68 @@ export default function Match() {
         </div>
       )}
 
-      {/* Buff 卡片 */}
-      <div className="buff-card-container">
-        <div
-          className={`buff-card${isBuffFlipped ? ' flipped' : ''}`}
-          onClick={handleBuffClick}
-          ref={buffCardRef}
-          style={isBuffFlipped ? { pointerEvents: 'none', cursor: 'default' } : {}}
-        >
-          <div className="buff-card-face buff-card-front">
-            <span>点击抽取 Buff</span>
+      {/* 规则说明 Modal */}
+      <Modal
+        visible={showRulesModal}
+        title="比分填写规则"
+        content={
+          <div style={{ padding: '16px 0' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>📝 得分规则</h4>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: '#666', lineHeight: '1.6' }}>
+                <li>每个玩家输入自己的进球数</li>
+                <li>支持小数，如 0.5、1.5 等</li>
+              </ul>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>🏆 获胜规则</h4>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: '#666', lineHeight: '1.6' }}>
+                <li>点击红队或蓝队区域选择获胜队伍</li>
+                <li>获胜队伍旁会显示奖杯图标</li>
+                <li>获胜队伍与得分总和无关，由裁判决定</li>
+                <li>必须选择获胜队伍才能结算比赛</li>
+              </ul>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>⚽ 示例说明</h4>
+              <div style={{ color: '#666', lineHeight: '1.6' }}>
+                <p style={{ margin: '4px 0' }}><strong>红队：</strong></p>
+                <p style={{ margin: '4px 0' }}>• A1 得分：1.5</p>
+                <p style={{ margin: '4px 0' }}>• A2 得分：0.5</p>
+                <p style={{ margin: '8px 0' }}><strong>蓝队：</strong></p>
+                <p style={{ margin: '4px 0' }}>• B1 得分：2</p>
+                <p style={{ margin: '4px 0' }}>• B2 得分：0</p>
+                <p style={{ margin: '8px 0' }}><strong>结果：</strong>点击红队或蓝队选择获胜方</p>
+              </div>
+            </div>
+
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>🎯 特殊情况</h4>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: '#666', lineHeight: '1.6' }}>
+                <li>乌龙球：玩家打进自己球门，计入该玩家得分</li>
+                <li>意外得分：非正常进球，计入相应玩家得分</li>
+              </ul>
+            </div>
           </div>
-          <div className="buff-card-face buff-card-back">
-            <div className="buff-name">{buff ? buff.name : ''}</div>
-            <div className="buff-desc">{buff ? buff.description : ''}</div>
-          </div>
-        </div>
-      </div>
+        }
+        closeOnAction
+        onClose={() => setShowRulesModal(false)}
+        actions={[
+          {
+            key: 'confirm',
+            text: '知道了',
+          },
+        ]}
+      />
 
       <style jsx>{`
         .match-container {
           padding: 12px;
           width: 100%;
           box-sizing: border-box;
+          min-height: 100%;
         }
         
         .player-grid {
@@ -412,6 +505,12 @@ export default function Match() {
           grid-template-columns: 1fr 1fr;
           gap: 8px;
           margin-bottom: 16px;
+        }
+        
+        .start-match-container {
+          margin-top: 8px;
+          padding-top: 8px;
+          margin-bottom: 8px;
         }
         
         .player-item {
@@ -468,6 +567,47 @@ export default function Match() {
           flex-direction: column;
           align-items: center;
           flex: 1;
+          padding: 16px;
+          border-radius: 12px;
+          cursor: pointer;
+          position: relative;
+        }
+        
+        .team-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+          justify-content: center;
+          padding: 8px 16px;
+          border-radius: 8px;
+          transition: background-color 0.2s ease;
+          border: 1px solid transparent;
+        }
+        
+        .team-header.winner {
+          background-color: rgba(255, 215, 0, 0.15);
+          border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .team-header h4 {
+          margin: 0;
+          display: flex;
+          align-items: center;
+        }
+        
+        .winner-icon-placeholder {
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .vertical-team.winner {
+          background-color: rgba(255, 215, 0, 0.1);
+          border-color: rgba(255, 215, 0, 0.3);
+          box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
         }
         
         .team-list {
@@ -525,9 +665,12 @@ export default function Match() {
         }
         
         .team h4 {
-          margin: 0 0 8px 0;
+          margin: 0;
           text-align: center;
           color: #333;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         
         .team-grid {
@@ -539,72 +682,62 @@ export default function Match() {
         .action-buttons {
           display: flex;
           gap: 16px;
-          margin-top: 16px;
+          padding: 16px;
+          padding-bottom: calc(16px + env(safe-area-inset-bottom));
+          background-color: #fff;
+          border-top: 1px solid #e9ecef;
+          z-index: 1000;
         }
         
         .buff-card-container {
           display: flex;
           justify-content: center;
-          margin-bottom: 24px;
-          margin-top: 16px;
+          margin-bottom: 16px;
+          margin-top: 0;
         }
         .buff-card {
           width: calc(100vw - 24px);
           max-width: 480px;
           height: 140px;
-          perspective: 600px;
-          cursor: pointer;
           position: relative;
           margin: 0 12px;
+          border-radius: 16px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+          background: linear-gradient(135deg, #e0ffe7 0%, #b2f7ef 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        .buff-card-face {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          backface-visibility: hidden;
+        
+        .buff-card-content {
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          border-radius: 16px;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-          font-size: 20px;
-          font-weight: 500;
-          background: linear-gradient(135deg, #e0ffe7 0%, #b2f7ef 100%);
-          color: #0ea47a;
-          transition: transform 0.6s cubic-bezier(0.4,0.2,0.2,1), box-shadow 0.2s;
+          text-align: center;
+          padding: 20px;
         }
-        .buff-card-front {
-          z-index: 2;
-          transform: rotateY(0deg);
-        }
-        .buff-card-back {
-          transform: rotateY(180deg);
-          background: linear-gradient(135deg, #fffbe0 0%, #ffe0e0 100%);
-          color: #e67e22;
-        }
-        .buff-card.flipped {
-          transform: rotateY(180deg);
-        }
+        
         .buff-name {
           font-size: 20px;
           font-weight: bold;
           margin-bottom: 8px;
+          color: #0ea47a;
         }
+        
         .buff-desc {
           font-size: 14px;
-          color: #e67e22;
+          color: #0ea47a;
           text-align: center;
+          line-height: 1.4;
         }
-        .buff-card:active {
-          box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-        }
-        .buff-card {
-          transition: transform 0.6s cubic-bezier(0.4,0.2,0.2,1), box-shadow 0.2s;
-          transform-style: preserve-3d;
-        }
-        .buff-card-face {
-          transition: none;
+        
+        .system-score {
+          font-size: 12px;
+          color: #999;
+          text-align: center;
+          margin-top: 8px;
+          font-style: italic;
         }
       `}</style>
     </div>

@@ -32,7 +32,7 @@ export const BUFF_CONFIGS: BuffConfig[] = [
     index: 3,
     id: 'champion_penalty',
     name: '打擂台',
-    description: '赢的队伍下一场仍在场，但对方获胜所需分数-1.5，直到擂主下场重置',
+    description: '赢的队伍下一场守擂，挑战者只需获得1.5分即算胜利；守擂不得超过1局（即连续2局后擂主无论输赢都需下场）',
     effect: 'winner_stays_opponent_score_minus_1.5'
   },
   {

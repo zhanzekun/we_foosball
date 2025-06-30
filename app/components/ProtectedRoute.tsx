@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (status === 'loading') return // 还在加载中
 
     if (!session) {
-      router.push('/')
+      router.replace('/')
     }
   }, [session, status, router])
 

@@ -40,15 +40,15 @@ export default function WelcomePage() {
 
       if (isRegistered) {
         // 用户已注册，跳转到主页
-        router.push('/home')
+        router.replace('/home')
       } else {
         // 用户未注册，跳转到注册页面
-        router.push('/signup')
+        router.replace('/signup')
       }
     } catch (error) {
       console.error('检查用户注册状态失败:', error)
       // 出错时默认跳转到注册页面
-      router.push('/signup')
+      router.replace('/signup')
     } finally {
       setIsCheckingRegistration(false)
     }
