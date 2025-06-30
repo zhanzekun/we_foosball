@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       participants.push({
         game_id: gameId,
         user_id: player.user_custom_id,
-        score: playerScores[player.user_custom_id] ?? null,
+        score: playerScores[player.user_custom_id] ?? 0,
         team_index: 0  // 红队索引为0
       });
     });
