@@ -1,3 +1,5 @@
+'use client'
+
 import { WinnerIcon } from "@/app/components/WinnerIcon";
 
 export default function RulesPage() {

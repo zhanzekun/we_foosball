@@ -8,6 +8,7 @@ import {
   UnorderedListOutline,
   UserOutline,
 } from 'antd-mobile-icons'
+import { motion, AnimatePresence } from 'framer-motion'
 import Match from '../pages/match/page'
 import ProtectedRoute from '../components/ProtectedRoute'
 import UserPage from '../pages/user'
@@ -85,7 +86,18 @@ function HomePage() {
         <SafeArea position='top' />
       </div>
       <div className="body">
-        {renderContent()}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1, ease: "easeInOut" }}
+            style={{ height: '100%' }}
+          >
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
       </div>
       <div className="bottom">
         <Bottom activeKey={activeTab} onTabChange={handleTabChange} />

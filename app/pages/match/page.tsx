@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Card, Button, Checkbox, Input, Modal } from 'antd-mobile'
 import { RedoOutline, QuestionCircleOutline } from 'antd-mobile-icons'
-import supabase from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import useMatchStore from '@/store/match'
 import { BuffCard, MatchResult, Player, PlayerScore } from '@/types'
@@ -17,7 +16,6 @@ export default function Match() {
   const [isLoading, setIsLoading] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [buff, setBuff] = useState<BuffCard | null>(null)
   const [showRulesModal, setShowRulesModal] = useState(false)
   const [winnerTeamIndex, setWinnerTeamIndex] = useState<number>(winnerDefaultIndex)
 
@@ -36,7 +34,9 @@ export default function Match() {
     combo2v2,
     setCombo2v2,
     playerScores,
-    setPlayerScores
+    setPlayerScores,
+    buff,
+    fetchBuff
   } = useMatchStore()
 
   // 刷新玩家列表
@@ -60,32 +60,8 @@ export default function Match() {
 
   // 获取当前buff
   useEffect(() => {
-    const fetchBuff = async () => {
-      // 获取当前日期
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const today = `${yyyy}-${mm}-${dd}`;
-      // 判断上午/下午
-      const hour = now.getHours();
-      const period = hour < 14 ? 'am' : 'pm';
-      // 查询 supabase
-      const { data, error } = await supabase
-        .from('buff_history')
-        .select('buff_name, buff_description')
-        .eq('date', today)
-        .eq('period', period)
-        .maybeSingle();
-      if (data) {
-        setBuff({ name: data.buff_name, description: data.buff_description });
-      } else {
-        setBuff({ name: '暂无Buff', description: '今日Buff尚未生成' });
-      }
-    }
-
     fetchBuff()
-  }, [])
+  }, [fetchBuff])
 
   // 处理玩家选择
   const handlePlayerSelect = (user_custom_id: string, checked: boolean) => {
