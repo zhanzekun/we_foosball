@@ -76,9 +76,8 @@ export default function UserPage() {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut()
-      await signOut()
       clearUserInfo() // 清除缓存的用户信息
-      router.replace('/')
+      await signOut({ callbackUrl: '/', redirect: true })
     } catch (error) {
       console.error('退出登录失败:', error)
     }
@@ -93,13 +92,23 @@ export default function UserPage() {
       return
     }
 
+    if(!values.position) {
+      alert('请选择您的位置')
+      return
+    }
+
+    if(!values.nickname && !userInfo?.nickname) {
+      alert('请输入您的昵称')
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
       const { data, error } = await supabase
         .from('user')
         .update({
-          nickname: values.nickname,
+          nickname: values.nickname || userInfo?.nickname,
           position: selectedPosition,
         })
         .eq('user_custom_id', session?.user?.email)

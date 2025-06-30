@@ -13,7 +13,6 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         src: '/logo.svg',
         sizes: '192x192',
-        type: 'image/svg+xml',
       },
     ],
   }
