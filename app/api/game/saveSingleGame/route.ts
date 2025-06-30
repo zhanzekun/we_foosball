@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { Player } from "@/types";
+import { TEAM_INDEX_RED, TEAM_INDEX_BLUE } from "@/const";
 
 // 定义请求体的类型接口
 interface SaveGameRequest {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查获胜队伍索引
-    if (winnerTeamIndex !== 0 && winnerTeamIndex !== 1) {
+    if (![TEAM_INDEX_RED, TEAM_INDEX_BLUE].includes(winnerTeamIndex)) {
       return NextResponse.json({ error: '获胜队伍索引无效' }, { status: 400 });
     }
 

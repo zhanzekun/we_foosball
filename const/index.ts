@@ -9,3 +9,7 @@ export const positionOptions = [
     { label: '后卫', value: POSITION_INDEX.DEFENDER },
     { label: '全能', value: POSITION_INDEX.ALL_ROUNDER },
 ]
+
+export const winnerDefaultIndex = 1
+export const TEAM_INDEX_RED = 1
+export const TEAM_INDEX_BLUE = 2

@@ -8,10 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import useMatchStore from '@/store/match'
 import { BuffCard, MatchResult, Player, PlayerScore } from '@/types'
 import Image from 'next/image'
+import { winnerDefaultIndex, TEAM_INDEX_RED, TEAM_INDEX_BLUE } from '@/const'
 
-const winnerDefaultIndex = 1
-const TEAM_INDEX_RED = 1
-const TEAM_INDEX_BLUE = 2
 
 const winnerIcon = (
   <Image
