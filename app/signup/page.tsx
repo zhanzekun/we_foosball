@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Form, Input, Button, Selector } from 'antd-mobile'
 import supabase from '@/lib/supabase/client'
+import { positionOptions } from '@/const'
 
 interface SignupForm {
   nickname: string
