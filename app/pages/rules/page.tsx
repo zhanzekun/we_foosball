@@ -24,8 +24,8 @@ export default function RulesPage() {
                         红队
                     </h4>
                 </div>
-                <li style={{ marginBottom: '8px' }}>获胜队伍与得分总和无关，而是与得分&当场Buff有关。</li>
-                <li>必须选择获胜队伍才能结算比赛。</li>
+                <li style={{ marginBottom: '8px', fontWeight: 'bold' }}>获胜队伍与得分总和无关，而是与得分&当场Buff有关。</li>
+                <li style={{ fontWeight: 'bold' }}>必须选择获胜队伍才能结算比赛。</li>
             </ul>
         </div>
 
