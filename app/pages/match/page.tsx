@@ -38,7 +38,8 @@ export default function Match() {
     setPlayerScores,
     buff,
     fetchBuff,
-    playersGamesCount
+    playersGamesCount,
+    setPlayersGamesCount,
   } = useMatchStore()
 
   // 刷新玩家列表
@@ -87,8 +88,8 @@ export default function Match() {
 
     setTimeout(() => {
       const selectedPlayersList = players.filter(p => selectedPlayers.has(p.user_custom_id))
-      console.log('selectedPlayersList', selectedPlayersList)
-      const playersListWithGamesCount = selectedPlayersList.map(p => ({ ...p, game_played_count: playersGamesCount[p.user_custom_id] }))
+      // console.log('selectedPlayersList', selectedPlayersList)
+      const playersListWithGamesCount = selectedPlayersList.map(p => ({ ...p, game_played_count: playersGamesCount[p.user_custom_id] || 0 }))
       const twoVtwoPlayers = rankMatch(playersListWithGamesCount)
       console.log('twoVtwoPlayers', twoVtwoPlayers)
       setCombo2v2(twoVtwoPlayers)
@@ -142,6 +143,7 @@ export default function Match() {
     setIsSubmitting(true)
 
     try {
+      setPlayersGamesCount(combo2v2)
       // 这里可以添加保存比赛结果的逻辑
       const matchData = {
         team1: combo2v2?.slice(0, 2),
@@ -261,6 +263,7 @@ export default function Match() {
                   onClick={e => e.stopPropagation()}
                 />
                 <span className="player-name">{player.nickname} [{player.position === 1 ? '前锋' : player.position === 2 ? '后卫' : '全能'}]</span>
+                <span className="player-games-count">[{playersGamesCount[player.user_custom_id] || 0}场]</span>
               </div>
             )
           })}

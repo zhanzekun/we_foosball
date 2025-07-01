@@ -21,7 +21,7 @@ export default function WelcomePage() {
   const checkUserRegistration = async () => {
     if (!session?.user?.email) return
 
-    console.log('checkUserRegistration', session)
+    // console.log('checkUserRegistration', session)
 
     setIsCheckingRegistration(true)
 

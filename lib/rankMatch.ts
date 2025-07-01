@@ -1,42 +1,72 @@
 import { Player, PlayerWithGamesCount } from "@/types"
 import { POSITION_INDEX } from "@/const"
 
-// 新规则：
+// 匹配规则：
 // 1. 优先让上场次数少的人先上场，将玩家池按上场次数升序排列
-// 2. 优先匹配后卫，后卫不够时全能和前锋都可以补齐，全能和前锋之间不排序，按原顺序补齐
+// 2. 如果发现同队2人是同位置（不包括全能），则将上场次数多的人换下，替补上上场次数少的人，直到同队2人位置不同
 export const rankMatch = (players: PlayerWithGamesCount[]) => {
-    // 检查players.length >= 4
     if (players.length < 4) {
         throw new Error("players.length < 4")
     }
 
     // 1. 按上场次数升序排列，如果同上场次数，则打乱顺序
     const sortedPlayers = [...players].sort((a, b) => {
-        if (a.game_played_count !== b.game_played_count) {
-            return a.game_played_count - b.game_played_count
-        } else {
-            return Math.random() - 0.5
-        }
+        return a.game_played_count - b.game_played_count
     })
 
-    // 2. 先选后卫
-    const defenders = sortedPlayers.filter(p => p.position === POSITION_INDEX.DEFENDER)
-    let result: PlayerWithGamesCount[] = []
-    for (const p of defenders) {
-        if (result.length < 4) result.push(p)
+    console.log('sortedPlayers', sortedPlayers.map(p => ({
+        name: p.nickname,
+        count: p.game_played_count
+    })))
+
+    // 2. 选出前4名作为本场参赛队员
+    let selected = sortedPlayers.slice(0, 4)
+    let bench = sortedPlayers.slice(4)
+
+    // 随机打乱顺序
+    for (let i = selected.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+            ;[selected[i], selected[j]] = [selected[j], selected[i]]
     }
 
-    // 3. 后卫不够时，从剩下的玩家中补齐（全能和前锋都行，且不排序，按原顺序）
-    if (result.length < 4) {
-        const rest = sortedPlayers.filter(p => p.position !== POSITION_INDEX.DEFENDER)
-        for (const p of rest) {
-            if (result.length < 4) result.push(p)
+    // 3. 分成两队
+    let team1 = [selected[0], selected[1]]
+    let team2 = [selected[2], selected[3]]
+
+    // 4. 检查并调整每队是否有同位置（不包括全能）
+    function hasSamePosition(team: PlayerWithGamesCount[]) {
+        // 只要不是全能且位置相同
+        return team[0].position === team[1].position && team[0].position !== POSITION_INDEX.ALL_ROUNDER
+    }
+
+    function tryFixTeam(team: PlayerWithGamesCount[], bench: PlayerWithGamesCount[]): [PlayerWithGamesCount[], PlayerWithGamesCount[]] {
+        if (!hasSamePosition(team)) return [team, bench]
+        // 找bench里有没有和team不同位置的
+        for (let i = 0; i < bench.length; i++) {
+            if (bench[i].position !== team[0].position || bench[i].position === POSITION_INDEX.ALL_ROUNDER) {
+                // 换下team里上场次数多的
+                const idx = team[0].game_played_count >= team[1].game_played_count ? 0 : 1
+                const out = team[idx]
+                const newTeam = [...team]
+                newTeam[idx] = bench[i]
+                const newBench = [...bench]
+                newBench.splice(i, 1)
+                newBench.push(out)
+                // 递归修正（bench可能还有更合适的）
+                return tryFixTeam(newTeam, newBench)
+            }
         }
+        // bench里没有合适的，返回原队伍
+        return [team, bench]
     }
 
-    if (result.length !== 4) {
-        throw new Error("匹配失败：无法组成4人队伍")
+    [team1, bench] = tryFixTeam(team1, bench);
+    [team2, bench] = tryFixTeam(team2, bench);
+
+    // 最终检查
+    if (hasSamePosition(team1) || hasSamePosition(team2)) {
+        throw new Error("匹配失败：无法组成两队不同位置的队伍")
     }
 
-    return result
+    return [...team1, ...team2]
 }

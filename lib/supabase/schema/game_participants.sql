@@ -4,6 +4,6 @@ create table public.game_participants (
   game_id text null,
   user_id text null,
   team_index smallint null,
-  score smallint null,
+  score real null,
   constraint game_participants_pkey primary key (id)
 ) TABLESPACE pg_default;

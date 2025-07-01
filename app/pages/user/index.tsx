@@ -36,7 +36,7 @@ export default function UserPage() {
 
     // 如果 store 中已有用户信息且邮箱匹配,且有position，直接使用
     if (userInfo && userInfo.user_custom_id === session.user?.email && userInfo.position) {
-      console.log('userInfo  match cache')
+      // console.log('userInfo  match cache')
       setLoading(false)
       return
     }
@@ -45,7 +45,7 @@ export default function UserPage() {
   }, [session, status, router, userInfo, setUserInfo, setLoading])
 
   const fetchUserInfo = async () => {
-    console.log('fetchUserInfo', session)
+    // console.log('fetchUserInfo', session)
     if (!session?.user?.email) return
 
     try {

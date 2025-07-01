@@ -23,6 +23,8 @@ interface MatchStore {
     setPlayerScores: (playerScores: PlayerScore) => void
     setBuff: (buff: BuffCard | null) => void
     resetMatch: () => void
+    setPlayersGamesCount: (combo2v2: Player[]) => void
+    getPlayersGamesCount: () => Record<Player['user_custom_id'], number>
 }
 
 const useMatchStore = create<MatchStore>((set, get) => ({
@@ -174,12 +176,31 @@ const useMatchStore = create<MatchStore>((set, get) => ({
 
     setCombo2v2: (combo2v2: Player[] | null) => {
         set({ combo2v2 })
-        // 更新玩家游戏次数
-        if (combo2v2) {
-            combo2v2.forEach(player => {
-                set({ playersGamesCount: { ...get().playersGamesCount, [player.user_custom_id]: (get().playersGamesCount[player.user_custom_id] || 0) + 1 } })
-            })
+    },
+
+    setPlayersGamesCount: (combo2v2: Player[]) => {
+        const playersGamesCount = get().playersGamesCount
+        combo2v2.forEach(player => {
+            playersGamesCount[player.user_custom_id] = (playersGamesCount[player.user_custom_id] || 0) + 1
+        })
+        set({ playersGamesCount })
+        // 更新缓存
+        localStorage.setItem('cached_players_games_count', JSON.stringify(playersGamesCount))
+        localStorage.setItem('cached_players_games_count_time', Date.now().toString())
+    },
+
+    getPlayersGamesCount: () => {
+        const cachedPlayersGamesCount = localStorage.getItem('cached_players_games_count')
+        const cachedPlayersGamesCountTime = localStorage.getItem('cached_players_games_count_time')
+        if (cachedPlayersGamesCount && cachedPlayersGamesCountTime) {
+            const now = Date.now()
+            const cacheAge = now - parseInt(cachedPlayersGamesCountTime)
+            const twoHours = 2 * 60 * 60 * 1000
+            if (cacheAge < twoHours) {
+                return JSON.parse(cachedPlayersGamesCount)
+            }
         }
+        return get().playersGamesCount
     },
 
     setShow2v2: (show2v2: boolean) => {
