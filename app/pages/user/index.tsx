@@ -204,7 +204,7 @@ export default function UserPage() {
             />
             <List.Item
               title="当前版本号"
-              description={process.env.NEXT_PUBLIC_VERSION || '未知'}
+              description={process.env.NEXT_PUBLIC_BUILD_ID || '未知'}
             />
           </List>
         </Card>
