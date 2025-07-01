@@ -37,7 +37,8 @@ export default function Match() {
     playerScores,
     setPlayerScores,
     buff,
-    fetchBuff
+    fetchBuff,
+    playersGamesCount
   } = useMatchStore()
 
   // 刷新玩家列表
@@ -75,20 +76,6 @@ export default function Match() {
     setSelectedPlayers(newSelected)
   }
 
-  // 随机匹配逻辑
-  const performMatch = (selectedPlayerIds: string[]): MatchResult => {
-    const selectedPlayerList = players.filter(player => selectedPlayerIds.includes(player.user_custom_id))
-
-    // 随机打乱数组
-    const shuffled = [...selectedPlayerList].sort(() => Math.random() - 0.5)
-
-    // 分成两队，每队4人
-    const team1 = shuffled.slice(0, 4)
-    const team2 = shuffled.slice(4, 8)
-
-    return { team1, team2 }
-  }
-
   // 开始匹配
   const handleStartMatch = () => {
     if (selectedPlayers.size < 4) {
@@ -100,7 +87,10 @@ export default function Match() {
 
     setTimeout(() => {
       const selectedPlayersList = players.filter(p => selectedPlayers.has(p.user_custom_id))
-      const twoVtwoPlayers = rankMatch(selectedPlayersList)
+      console.log('selectedPlayersList', selectedPlayersList)
+      const playersListWithGamesCount = selectedPlayersList.map(p => ({ ...p, game_played_count: playersGamesCount[p.user_custom_id] }))
+      const twoVtwoPlayers = rankMatch(playersListWithGamesCount)
+      console.log('twoVtwoPlayers', twoVtwoPlayers)
       setCombo2v2(twoVtwoPlayers)
       setShow2v2(true)
       setMatchResult(null)

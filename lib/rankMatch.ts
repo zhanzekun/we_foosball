@@ -1,71 +1,42 @@
-import { Player } from "@/types"
+import { Player, PlayerWithGamesCount } from "@/types"
 import { POSITION_INDEX } from "@/const"
 
-// 同队伍中会优先匹配一前锋一后卫，若玩家为全能则都可以担任任意位置。
-export const rankMatch = (players: Player[]) => {
+// 新规则：
+// 1. 优先让上场次数少的人先上场，将玩家池按上场次数升序排列
+// 2. 优先匹配后卫，后卫不够时全能和前锋都可以补齐，全能和前锋之间不排序，按原顺序补齐
+export const rankMatch = (players: PlayerWithGamesCount[]) => {
     // 检查players.length >= 4
     if (players.length < 4) {
         throw new Error("players.length < 4")
     }
 
-    // 打乱顺序
-    const randomPlayers = players.sort(() => Math.random() - 0.5)
+    // 1. 按上场次数升序排列，如果同上场次数，则打乱顺序
+    const sortedPlayers = [...players].sort((a, b) => {
+        if (a.game_played_count !== b.game_played_count) {
+            return a.game_played_count - b.game_played_count
+        } else {
+            return Math.random() - 0.5
+        }
+    })
 
-    // 按位置分类玩家
-    const forwards = randomPlayers.filter(p => p.position === POSITION_INDEX.FORWARD)
-    const defenders = randomPlayers.filter(p => p.position === POSITION_INDEX.DEFENDER)
-    const allRounders = randomPlayers.filter(p => p.position === POSITION_INDEX.ALL_ROUNDER)
+    // 2. 先选后卫
+    const defenders = sortedPlayers.filter(p => p.position === POSITION_INDEX.DEFENDER)
+    let result: PlayerWithGamesCount[] = []
+    for (const p of defenders) {
+        if (result.length < 4) result.push(p)
+    }
 
-    // 创建结果数组
-    const result: Player[] = []
-    
-    // 第一队：优先匹配一前锋一后卫
-    let team1Forward: Player | null = null
-    let team1Defender: Player | null = null
-    
-    // 尝试为第一队分配前锋
-    if (forwards.length > 0) {
-        team1Forward = forwards.shift()!
-    } else if (allRounders.length > 0) {
-        team1Forward = allRounders.shift()!
+    // 3. 后卫不够时，从剩下的玩家中补齐（全能和前锋都行，且不排序，按原顺序）
+    if (result.length < 4) {
+        const rest = sortedPlayers.filter(p => p.position !== POSITION_INDEX.DEFENDER)
+        for (const p of rest) {
+            if (result.length < 4) result.push(p)
+        }
     }
-    
-    // 尝试为第一队分配后卫
-    if (defenders.length > 0) {
-        team1Defender = defenders.shift()!
-    } else if (allRounders.length > 0) {
-        team1Defender = allRounders.shift()!
-    }
-    
-    // 如果第一队还没有完整，从剩余玩家中补充
-    if (!team1Forward && forwards.length > 0) {
-        team1Forward = forwards.shift()!
-    }
-    if (!team1Defender && defenders.length > 0) {
-        team1Defender = defenders.shift()!
-    }
-    
-    // 将第一队玩家加入结果数组
-    if (team1Forward) result.push(team1Forward)
-    if (team1Defender) result.push(team1Defender)
-    
-    // 第二队：分配剩余玩家
-    const remainingPlayers = [...forwards, ...defenders, ...allRounders]
-    
-    // 如果第一队不完整，从剩余玩家中补充
-    while (result.length < 2 && remainingPlayers.length > 0) {
-        result.push(remainingPlayers.shift()!)
-    }
-    
-    // 将第二队玩家加入结果数组
-    while (result.length < 4 && remainingPlayers.length > 0) {
-        result.push(remainingPlayers.shift()!)
-    }
-    
-    // 确保返回4个玩家
+
     if (result.length !== 4) {
-        throw new Error("匹配失败：无法组成两个完整的队伍")
+        throw new Error("匹配失败：无法组成4人队伍")
     }
-    
+
     return result
 }

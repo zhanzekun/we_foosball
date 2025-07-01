@@ -7,6 +7,10 @@ export interface Player {
   position: number
 }
 
+export interface PlayerWithGamesCount extends Player {
+  game_played_count: number
+}
+
 export interface UserInfo {
   user_custom_id: string
   nickname: string

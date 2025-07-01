@@ -11,6 +11,7 @@ interface MatchStore {
     isMatchStarted: boolean
     playerScores: PlayerScore
     buff: BuffCard | null
+    playersGamesCount: Record<Player['user_custom_id'], number>
     refreshPlayers: () => Promise<void>
     forceRefreshPlayers: () => Promise<void>
     fetchBuff: () => Promise<void>
@@ -33,6 +34,8 @@ const useMatchStore = create<MatchStore>((set, get) => ({
     isMatchStarted: false,
     playerScores: {},
     buff: null,
+    // 缓存2小时，过期后则清空
+    playersGamesCount: {},
     
     refreshPlayers: async () => {
         try {
@@ -171,6 +174,12 @@ const useMatchStore = create<MatchStore>((set, get) => ({
 
     setCombo2v2: (combo2v2: Player[] | null) => {
         set({ combo2v2 })
+        // 更新玩家游戏次数
+        if (combo2v2) {
+            combo2v2.forEach(player => {
+                set({ playersGamesCount: { ...get().playersGamesCount, [player.user_custom_id]: (get().playersGamesCount[player.user_custom_id] || 0) + 1 } })
+            })
+        }
     },
 
     setShow2v2: (show2v2: boolean) => {

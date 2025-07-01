@@ -30,20 +30,13 @@ export const BUFF_CONFIGS: BuffConfig[] = [
   },
   {
     index: 3,
-    id: 'champion_penalty',
-    name: '打擂台',
-    description: '赢的队伍下一场守擂，挑战者只需获得1.5分即算胜利；守擂不得超过1局（即连续2局后擂主无论输赢都需下场）',
-    effect: 'winner_stays_opponent_score_minus_1.5'
-  },
-  {
-    index: 4,
     id: 'flying_ball_gift',
     name: '飞球送礼',
     description: '将球打飞到球场之外，对方+0.5分',
     effect: 'ball_out_opponent_plus_0.5'
   },
   {
-    index: 5,
+    index: 4,
     id: 'position_swap',
     name: '位移互换',
     description: '任何一方进球时，双方队伍内的前锋/后卫需对换',
