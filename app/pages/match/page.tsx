@@ -140,6 +140,11 @@ export default function Match() {
       return
     }
 
+    if (!combo2v2) {
+      // 请先进行匹配
+      throw new Error('无对阵双方信息，请先进行匹配')
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -151,7 +156,8 @@ export default function Match() {
         playerScores,
         team1Total: getTeamTotalScore(combo2v2?.slice(0, 2) || []),
         team2Total: getTeamTotalScore(combo2v2?.slice(2, 4) || []),
-        winnerTeamIndex: winnerTeamIndex
+        winnerTeamIndex: winnerTeamIndex,
+        gameBuffId: buff?.buffId
       }
 
       // 保存比赛结果
@@ -262,8 +268,7 @@ export default function Match() {
                   onChange={(checked) => handlePlayerSelect(player.user_custom_id, checked)}
                   onClick={e => e.stopPropagation()}
                 />
-                <span className="player-name">{player.nickname} [{player.position === 1 ? '前锋' : player.position === 2 ? '后卫' : '全能'}]</span>
-                <span className="player-games-count">[{playersGamesCount[player.user_custom_id] || 0}场]</span>
+                <span className="player-name">{player.nickname} [{player.position === 1 ? '前锋' : player.position === 2 ? '后卫' : '全能'}][{playersGamesCount[player.user_custom_id] || 0}场]</span>
               </div>
             )
           })}

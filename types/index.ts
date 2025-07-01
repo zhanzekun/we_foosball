@@ -1,5 +1,5 @@
 // 只用于类型提示
-export type BuffCard = { name: string; description: string };
+export type BuffCard = { name: string; description: string, buffId?: number };
 
 export interface Player {
   user_custom_id: string

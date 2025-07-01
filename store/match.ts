@@ -110,16 +110,16 @@ const useMatchStore = create<MatchStore>((set, get) => ({
             // 查询 supabase
             const { data, error } = await supabase
                 .from('buff_history')
-                .select('buff_name, buff_description')
+                .select('buff_name, buff_description, buff_id')
                 .eq('date', today)
                 .eq('period', period)
                 .maybeSingle();
             
             let buffData: BuffCard;
             if (data) {
-                buffData = { name: data.buff_name, description: data.buff_description };
+                buffData = { name: data.buff_name, description: data.buff_description, buffId: data.buff_id };
             } else {
-                buffData = { name: '暂无Buff', description: '今日Buff尚未生成' };
+                buffData = { name: '暂无Buff', description: '今日Buff尚未生成'};
             }
             
             set({ buff: buffData })

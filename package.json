@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "de": "node lib/scripts/getCommitId.js && vercel deploy --prod",
+    "vd": "vercel deploy --prod",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest"
