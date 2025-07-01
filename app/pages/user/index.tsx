@@ -202,6 +202,10 @@ export default function UserPage() {
               title="场上位置"
               description={getPositionLabel(userInfo.position || 1)}
             />
+            <List.Item
+              title="当前版本号"
+              description={process.env.NEXT_PUBLIC_VERSION || '未知'}
+            />
           </List>
         </Card>
 
