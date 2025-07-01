@@ -11,14 +11,14 @@ export const BUFF_CONFIGS: BuffConfig[] = [
     index: 0,
     id: 'midfielder_boost',
     name: '中坚加成',
-    description: '中场进球算1.5分，转球算1分',
+    description: '中场进球算1.5分，转球算1分，中场转球算1.5分',
     effect: 'midfielder_goal_1.5_spin_1'
   },
   {
     index: 1,
     id: 'trick_shot_double',
     name: '狗招翻倍',
-    description: '狗招进球算1.5分，转球算1分',
+    description: '狗招进球算1.5分，转球算1分，狗招转球算1.5分',
     effect: 'trick_shot_goal_1.5_spin_1'
   },
   {
