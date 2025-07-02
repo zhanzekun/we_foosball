@@ -11,9 +11,9 @@ export default function GameLogPage() {
     fetchGameLogs()
   }, [fetchGameLogs])
 
-  if (isGameLogsLoading) {
-    return <div style={{ padding: 24 }}>加载中...</div>
-  }
+  // if (isGameLogsLoading) {
+  //   return <div style={{ padding: 24 }}>加载中...</div>
+  // }
 
   if (!gameLogs.length) {
     return <div style={{ padding: 24 }}>暂无比赛记录</div>
