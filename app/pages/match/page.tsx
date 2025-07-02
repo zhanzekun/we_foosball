@@ -18,7 +18,7 @@ export default function Match() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showRulesModal, setShowRulesModal] = useState(false)
-  const [winnerTeamIndex, setWinnerTeamIndex] = useState<number>(winnerDefaultIndex)
+  const [winnerTeamIndex, setWinnerTeamIndex] = useState<number | null>(null)
 
   // 使用 store
   const {
@@ -131,18 +131,21 @@ export default function Match() {
   const handleSettle = async () => {
     if (winnerTeamIndex === null) {
       // 请选择获胜队伍
+      alert('请选择获胜队伍!!!!')
       return
     }
 
     // 检查是否所有玩家都填写了分数
     if (!canSettle()) {
       // 请填写每个玩家的得分
+      alert('请填写每个玩家的得分!!!!')
       return
     }
 
     if (!combo2v2) {
       // 请先进行匹配
-      throw new Error('无对阵双方信息，请先进行匹配')
+      alert('无对阵双方信息，请先进行匹配')
+      return
     }
 
     setIsSubmitting(true)
@@ -172,11 +175,14 @@ export default function Match() {
         useMatchStore.getState().resetMatch()
         // 重置本地状态
         setWinnerTeamIndex(winnerDefaultIndex)
+        alert('比赛结果保存成功')
       } else {
         // 比赛结果保存失败
+        alert('比赛结果保存失败')
       }
     } catch (error) {
       // 比赛结果保存失败
+      alert('比赛结果保存失败')
     } finally {
       setIsSubmitting(false)
     }
@@ -196,6 +202,7 @@ export default function Match() {
   // 检查至少有1个玩家填写了分数
   const canSettle = () => {
     if (!combo2v2 || combo2v2.length !== 4) return false
+    if (winnerTeamIndex === null) return false
     return combo2v2.some(player => playerScores[player.user_custom_id] !== undefined)
   }
 
