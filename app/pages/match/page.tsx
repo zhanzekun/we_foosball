@@ -330,7 +330,7 @@ export default function Match() {
                 >
                   <div className={`team-header ${winnerTeamIndex === TEAM_INDEX_RED ? 'winner' : ''}`} onClick={() => handleTeamSelect(TEAM_INDEX_RED)}>
                     <div className="winner-icon-placeholder">
-                      {WinnerIcon(winnerTeamIndex === TEAM_INDEX_RED)}
+                      <WinnerIcon isShow={winnerTeamIndex === TEAM_INDEX_RED} />
                     </div>
                     <h4>
                       红队
@@ -361,7 +361,7 @@ export default function Match() {
                 >
                   <div className={`team-header ${winnerTeamIndex === TEAM_INDEX_BLUE ? 'winner' : ''}`} onClick={() => handleTeamSelect(TEAM_INDEX_BLUE)}>
                     <div className="winner-icon-placeholder">
-                      {WinnerIcon(winnerTeamIndex === TEAM_INDEX_BLUE)}
+                      <WinnerIcon isShow={winnerTeamIndex === TEAM_INDEX_BLUE} />
                     </div>
                     <h4>
                       蓝队

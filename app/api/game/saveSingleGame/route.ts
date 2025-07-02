@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         game_id: gameId,
         user_id: player.user_custom_id,
         score: playerScores[player.user_custom_id] ?? 0,
-        team_index: 0  // 红队索引为0
+        team_index: TEAM_INDEX_RED  // 红队索引为0
       });
     });
 
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         game_id: gameId,
         user_id: player.user_custom_id,
         score: playerScores[player.user_custom_id] ?? null,
-        team_index: 1  // 蓝队索引为1
+        team_index: TEAM_INDEX_BLUE  // 蓝队索引为1
       });
     });
 

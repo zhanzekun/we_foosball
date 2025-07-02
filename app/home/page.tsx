@@ -14,6 +14,7 @@ import ProtectedRoute from '../components/ProtectedRoute'
 import UserPage from '../pages/user'
 import TodoPage from '../pages/todo/todo'
 import { Gamepad1Icon } from 'tdesign-icons-react'
+import GameLogPage from '../pages/game_log/page'
 
 enum TabType {
   MATCH = 'match',
@@ -72,7 +73,7 @@ function HomePage() {
       case TabType.DATA:
         return <Todo />
       case TabType.RANK:
-        return <Todo />
+        return <GameLogPage />
       case TabType.ME:
         return <UserPage />
       default:

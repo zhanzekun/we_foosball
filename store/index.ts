@@ -1,2 +1,4 @@
 export * from './match'
-export * from './user'
+export { default as useUserStore } from './user'
+export { default as useMatchStore } from './match'
+export { default as useGameLogStore } from './gameLog'

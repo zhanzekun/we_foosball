@@ -1,6 +1,6 @@
 import Image from "next/image"
 
-export const WinnerIcon = (isShow: boolean = true) => (
+export const WinnerIcon = ({ isShow = true }: { isShow?: boolean }) => (
   <Image
     src="/trophy_1184688.png"
     alt="胜利"
@@ -9,3 +9,4 @@ export const WinnerIcon = (isShow: boolean = true) => (
     style={{ visibility: isShow ? 'visible' : 'hidden' }}
   />
 )
+
