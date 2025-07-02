@@ -38,8 +38,8 @@ export default function GameLogPage() {
               <div style={{ width: 80, textAlign: 'center', fontWeight: 700, fontSize: 18 }}>
                 {teamRedScore} : {teamBlueScore}
               </div>
-              <div style={{ flex: 1, textAlign: 'left'}}>
-                {log.winner_team_index === 2 && <span style={{ marginRight: 8 }}><WinnerIcon isShow={true} /></span>}
+              <div style={{ flex: 1, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}}>
+                {log.winner_team_index === 2 && <span style={{ marginRight: 8, display: 'flex', alignItems: 'center' }}><WinnerIcon isShow={true} /></span>}
                 {teamBlue}
               </div>
             </div>

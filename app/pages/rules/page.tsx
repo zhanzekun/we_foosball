@@ -18,7 +18,7 @@ export default function RulesPage() {
                 <li style={{ marginBottom: '8px' }}>点击红队或蓝队区域选择获胜队伍, 获胜队伍旁会显示奖杯图标。</li>
                 <div className={`team-header winner`}>
                     <div className="winner-icon-placeholder">
-                        {WinnerIcon(true)}
+                        <WinnerIcon isShow={true} />
                     </div>
                     <h4>
                         红队
