@@ -10,6 +10,6 @@ export const positionOptions = [
     { label: '全能', value: POSITION_INDEX.ALL_ROUNDER },
 ]
 
-export const winnerDefaultIndex = 1
+export const winnerDefaultIndex = null
 export const TEAM_INDEX_RED = 1
 export const TEAM_INDEX_BLUE = 2

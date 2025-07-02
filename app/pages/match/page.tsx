@@ -174,7 +174,7 @@ export default function Match() {
         // 使用 store 的 resetMatch 方法
         useMatchStore.getState().resetMatch()
         // 重置本地状态
-        setWinnerTeamIndex(winnerDefaultIndex)
+        setWinnerTeamIndex(null)
         alert('比赛结果保存成功')
       } else {
         // 比赛结果保存失败
@@ -193,7 +193,7 @@ export default function Match() {
     // 使用 store 的 resetMatch 方法
     useMatchStore.getState().resetMatch()
     // 重置本地状态
-    setWinnerTeamIndex(winnerDefaultIndex)
+    setWinnerTeamIndex(null)
   }
 
   const selectedCount = selectedPlayers.size
